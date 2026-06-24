@@ -13,6 +13,48 @@
     <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/theme-minimal.css">
+    <!-- MathJax: only on this page -->
+    <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']],
+        packages: {'[+]': ['ams']}
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <style>
+    /* page-scoped overrides */
+    .arch_table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14px; }
+    .arch_table th { background: #111; color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+    .arch_table td { padding: 9px 14px; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+    .arch_table tr:hover td { background: #f5f5f5; }
+    .arch_table .highlight td { background: #f0f0f0; font-weight: 500; }
+    .innovation_tag { display: inline-block; background: #111; color: #fff; font-size: 11px;
+                      font-weight: 600; letter-spacing: 0.5px; padding: 2px 8px; margin-left: 6px;
+                      vertical-align: middle; }
+    .section_divider { border: none; border-top: 2px solid #111; margin: 48px 0 36px; }
+    .math_block { background: #f8f8f8; border: 1px solid #e8e8e8; padding: 20px 28px;
+                  margin: 24px 0; overflow-x: auto; }
+    .reg_grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+    .reg_card { border: 1px solid #e0e0e0; padding: 16px 18px; }
+    .reg_card h5 { font-size: 14px; font-weight: 700; margin-bottom: 8px; text-transform: uppercase;
+                   letter-spacing: 0.5px; }
+    .reg_card p { font-size: 14px; margin: 0; color: #444; }
+    @media (max-width: 600px) { .reg_grid { grid-template-columns: 1fr; } }
+    .aug_example { border: 1px solid #e0e0e0; padding: 14px 16px; margin-bottom: 14px; }
+    .aug_example strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    .aug_example p { font-size: 14px; margin: 0; color: #444; }
+    .exam_tip { background: #111; color: #fff; padding: 18px 22px; margin: 32px 0; }
+    .exam_tip strong { display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+                       margin-bottom: 8px; color: #aaa; }
+    .exam_tip ul { margin: 0; padding-left: 18px; }
+    .exam_tip li { font-size: 14px; margin-bottom: 6px; }
+    </style>
 </head>
 <body class="blog_version">
 
@@ -62,23 +104,458 @@
         <div class="container">
             <div class="row">
 
+                <!-- ── Main content ── -->
                 <div class="col-lg-8">
                     <div class="post_header">
                         <span class="post_course_tag">ML for Robotics &amp; Computer Vision · Lec 08</span>
                         <h1>Building CNNs</h1>
                         <div class="post_meta">
-                            <span><i class="lnr lnr-calendar-full"></i>Nov 2025</span>
+                            <span><i class="lnr lnr-calendar-full"></i>June 2025</span>
                             <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
                         </div>
                     </div>
 
                     <div class="post_body">
+
                         <div class="note_box">
-                            <strong>Notes Coming Soon</strong>
-                            Notes coming soon — lecture slides are being processed. Check back shortly. This was the most recent lecture in the MLRCV series and the write-up will be posted once the slides are finalised.
+                            <strong>What this lecture is about</strong>
+                            You already know what a CNN is and how to train one. This lecture asks the more practical question: <em>given a fixed parameter budget, how do you spend it well?</em> It walks through the history of ImageNet competition winners (2012–2022) to extract the design principles that matter, then covers how to make networks efficient (MobileNet, EfficientNet), and finally how to prevent them from overfitting (regularisation + data augmentation).
                         </div>
 
-                        <p>This page will cover practical CNN architecture design: canonical architectures (AlexNet, VGG, ResNet, MobileNet), residual connections, depthwise separable convolutions, transfer learning, and hyperparameter choices for building effective networks for robotics perception tasks.</p>
+                        <!-- ══════════════════════════════════════════════
+                             PART 1 — ARCHITECTURE EVOLUTION
+                        ══════════════════════════════════════════════ -->
+                        <h2>1 · Architecture Evolution: ImageNet 2012–2022</h2>
+
+                        <p>The ImageNet Large Scale Visual Recognition Challenge (ILSVRC) drove a decade of innovation. Every major idea from this period is still found in modern robotics perception stacks. Below is the canonical progression — <strong>know every row in the exam table</strong>.</p>
+
+                        <table class="arch_table">
+                            <thead>
+                                <tr>
+                                    <th>Model</th><th>Year</th><th>Layers</th><th>Params</th><th>Top-5 Error</th><th>Key Innovation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>AlexNet</td><td>2012</td><td>8</td><td>60 M</td><td>16.4 %</td><td>ReLU, two-GPU split, dropout</td></tr>
+                                <tr><td>ZFNet</td><td>2013</td><td>8</td><td>—</td><td>11.7 %</td><td>Visualisation-guided tuning</td></tr>
+                                <tr class="highlight"><td>VGGNet</td><td>2014</td><td>16–19</td><td>138–144 M</td><td>7.3 %</td><td>Only 3×3 convs, systematic depth</td></tr>
+                                <tr><td>GoogLeNet</td><td>2014</td><td>22</td><td>~7 M</td><td>6.7 %</td><td>Inception layer, global avg pooling</td></tr>
+                                <tr class="highlight"><td>ResNet-152</td><td>2015</td><td>152</td><td>~60 M</td><td>3.6 %</td><td>Skip connections / residual learning</td></tr>
+                                <tr><td>ResNeXt-152-SE</td><td>2017</td><td>152</td><td>—</td><td>2.3 %</td><td>Squeeze-and-Excitation attention</td></tr>
+                            </tbody>
+                        </table>
+
+                        <!-- AlexNet -->
+                        <h3>1.1 AlexNet (2012) — The starter pistol</h3>
+                        <p>AlexNet proved that deep CNNs trained on GPUs could crush hand-crafted features. Architecture: 5 conv layers + 3 fully-connected layers = <strong>8 learnable layers</strong>, <strong>60 M parameters</strong> (most of them in the FC layers). Input is <code>227×227×3</code> with an aggressive <code>11×11, stride 4</code> first convolution.</p>
+
+                        <div class="note_box">
+                            <strong>AlexNet's enabling tricks:</strong>
+                            <ul>
+                                <li><strong>ReLU</strong> — used after every layer; trains 6× faster than tanh at that scale</li>
+                                <li><strong>Two-GPU split</strong> — fit the model across two GTX 580 s (3 GB each)</li>
+                                <li><strong>Dropout</strong> — applied in the FC layers with \(p = 0.5\) to combat the 60 M parameter overfitting risk</li>
+                                <li><strong>Local Response Normalisation</strong> — lateral inhibition (largely replaced by Batch Norm today)</li>
+                                <li>Ensemble of 5 models → 16.4 % top-5 error</li>
+                            </ul>
+                        </div>
+
+                        <!-- ZFNet -->
+                        <h3>1.2 ZFNet (2013) — Refinement by visualisation</h3>
+                        <p>Zeiler & Fergus used <em>deconvolutions</em> to visualise what each filter was learning. They discovered that AlexNet's first conv layer learned mixed, aliased features due to the large 11×11 stride-4 kernel. Fixing it to <strong>7×7 stride 4</strong> and tuning channel counts gave <strong>11.7 %</strong> — the same depth (8 layers) but better tuned. ZFNet matters more as a <em>methodology</em> (see what your network is doing) than as a new architecture.</p>
+
+                        <!-- VGG -->
+                        <h3>1.3 VGGNet (2014) — The power of depth &amp; simplicity</h3>
+                        <p>Karen Simonyan and Andrew Zisserman's insight: instead of large kernels, stack many small ones. A stack of two 3×3 convolutions has the same <em>receptive field</em> as one 5×5 but uses \(2 \times 3^2 = 18\) vs \(5^2 = 25\) weights per channel — and has an extra non-linearity.</p>
+
+                        <div class="note_box">
+                            <strong>VGG design rules — memorise these:</strong>
+                            <ol>
+                                <li>Only use <strong>3×3 convolutions</strong> (stride 1, padding 1 — spatial size unchanged)</li>
+                                <li><strong>2×2 max pooling</strong> (stride 2) to halve spatial dimensions</li>
+                                <li>When spatial size is halved, <strong>double the number of filters</strong> (64→128→256→512…)</li>
+                                <li>End with three FC layers; the first two use dropout</li>
+                            </ol>
+                        </div>
+
+                        <p>VGG-16 has 138 M parameters, VGG-19 has 144 M — almost all in the FC layers. Despite this, VGG's representation was so good that <em>VGG features were the go-to transfer learning backbone until ResNet arrived</em>. VGG required pre-training on a smaller dataset; training from scratch from random initialisation often failed at 16–19 layers.</p>
+
+                        <!-- GoogLeNet -->
+                        <h3>1.4 GoogLeNet / Inception (2014) — Efficiency through branching</h3>
+                        <p>GoogLeNet achieved a better error rate (6.7 %) than VGG with <em>20× fewer parameters</em> (~7 M). The key ideas:</p>
+
+                        <p><strong>1. The Inception layer.</strong> Rather than choosing which kernel size to use, use all of them in parallel and let the network learn which matters:</p>
+
+                        <div class="math_block">
+                        Inception layer = concat(1×1 conv, 3×3 conv, 5×5 conv, 3×3 max pool)
+                        </div>
+
+                        <p><strong>2. 1×1 bottleneck convolutions.</strong> Before each expensive 3×3 or 5×5 conv, apply a 1×1 conv to reduce channel depth. This dramatically cuts FLOPs. A 3×3 conv on 256 channels costs 256×3×3×256 weights; a 1×1 to 64 then 3×3 then 1×1 back to 256 costs only a fraction of that.</p>
+
+                        <p><strong>3. Global Average Pooling (GAP).</strong> Instead of flattening to FC layers, average each feature map spatially to a single scalar. If the last feature volume is \(H \times W \times C\), GAP gives a \(C\)-dimensional vector directly. This cuts millions of FC parameters and acts as a built-in regulariser.</p>
+
+                        <p><strong>4. Auxiliary classifiers.</strong> Two intermediate softmax heads are attached mid-network during training to push gradient deeper (pre-BatchNorm). They are removed at inference. With Batch Normalisation these are unnecessary.</p>
+
+                        <!-- ResNet -->
+                        <hr class="section_divider">
+                        <h3>1.5 ResNet (2015) — The single most important architecture idea <span class="innovation_tag">Exam Focus</span></h3>
+
+                        <p>He et al. observed something counter-intuitive: when training a 56-layer plain network versus an 18-layer one, the deeper network had <em>higher training error</em> — not just test error. This is not overfitting; it is an <strong>optimisation problem</strong>.</p>
+
+                        <div class="note_box">
+                            <strong>The identity layer argument:</strong> Consider a shallow network that solves a task well. A deeper network should be at least as good — in the worst case, the extra layers could just learn the identity mapping and ignore the input. But in practice, SGD cannot find this solution through random initialisation in deep networks. ResNet makes it easy.
+                        </div>
+
+                        <p><strong>Skip connections (shortcut connections).</strong> Instead of learning the full mapping \(H(\mathbf{x})\), a residual block learns:</p>
+
+                        <div class="math_block">
+                        \[\mathbf{y} = F(\mathbf{x}, \{W_i\}) + \mathbf{x}\]
+                        </div>
+
+                        <p>where \(F(\mathbf{x})\) is the <em>residual</em>: what the block needs to add on top of the identity. If the identity is the optimal mapping, the network simply learns \(F \to 0\). This is much easier to optimise than learning the identity through a stack of weight layers from scratch.</p>
+
+                        <p><strong>Basic block (ResNet-18, ResNet-34):</strong></p>
+                        <pre><code>Input → Conv 3×3 → BN → ReLU → Conv 3×3 → BN → (+) → ReLU → Output
+                                                                   ↑
+                                                              skip: x (or 1×1 projection)</code></pre>
+
+                        <p><strong>Bottleneck block (ResNet-50, -101, -152):</strong></p>
+                        <pre><code>Input (256 ch) → 1×1 Conv (64 ch) → BN → ReLU
+                           → 3×3 Conv (64 ch) → BN → ReLU
+                           → 1×1 Conv (256 ch) → BN → (+) → ReLU → Output
+                                                           ↑
+                                                       skip (1×1 projection if dims differ)</code></pre>
+
+                        <p>The bottleneck reduces the expensive 3×3 computation by first projecting down to 64 channels, doing the spatial mixing, and projecting back up. This is what makes 50+ layer networks feasible.</p>
+
+                        <div class="note_box">
+                            <strong>ResNet details worth knowing:</strong>
+                            <ul>
+                                <li>Batch Norm after every Conv, before ReLU</li>
+                                <li>Downsampling via strided conv (stride 2), not pooling</li>
+                                <li>When the skip connection crosses a resolution/channel boundary, use a <strong>1×1 conv projection</strong> on the skip path</li>
+                                <li>ResNet-152 achieves <strong>3.6 %</strong> top-5 error — a 4× improvement over AlexNet in 3 years</li>
+                                <li>ResNet-50 is the de-facto baseline in robotics vision today</li>
+                            </ul>
+                        </div>
+
+                        <!-- ══════════════════════════════════════════════
+                             PART 2 — EFFICIENT ARCHITECTURES
+                        ══════════════════════════════════════════════ -->
+                        <hr class="section_divider">
+                        <h2>2 · Efficient Architectures: Robots Have Power Budgets</h2>
+
+                        <p>The ImageNet winners optimised for accuracy on a GPU cluster. Robotics requires models that run on embedded hardware (Jetson, mobile CPU, microcontroller). The following architectures are designed to be <em>fast and small</em> with minimal accuracy trade-off.</p>
+
+                        <h3>2.1 MobileNet (2017) — Depthwise Separable Convolutions <span class="innovation_tag">Exam Focus</span></h3>
+
+                        <p>A standard 3×3 conv layer with \(C_{in}\) input channels and \(C_{out}\) output channels applies \(C_{out}\) filters of shape \(3 \times 3 \times C_{in}\) to every spatial location. The total multiplication cost per spatial location is:</p>
+
+                        <div class="math_block">
+                        \[\text{Standard conv: } K^2 \cdot C_{in} \cdot C_{out} \cdot H \cdot W\]
+                        </div>
+
+                        <p>MobileNet splits this into two steps:</p>
+
+                        <ol>
+                            <li><strong>Depthwise conv</strong> — apply one \(K \times K\) filter <em>per input channel</em> independently. This does spatial mixing but no cross-channel mixing. Cost: \(K^2 \cdot C_{in} \cdot H \cdot W\).</li>
+                            <li><strong>Pointwise conv</strong> — apply a \(1 \times 1 \times C_{in}\) conv to mix channels across the \(C_{out}\) output channels. Cost: \(C_{in} \cdot C_{out} \cdot H \cdot W\).</li>
+                        </ol>
+
+                        <p>The total cost and the ratio to standard conv:</p>
+
+                        <div class="math_block">
+                        \[\text{Depthwise sep.: } (K^2 + C_{out}) \cdot C_{in} \cdot H \cdot W\]
+                        \[\text{Ratio} = \frac{K^2 + C_{out}}{K^2 \cdot C_{out}} = \frac{1}{C_{out}} + \frac{1}{K^2} \approx \frac{1}{K^2}\]
+                        </div>
+
+                        <p>For \(K=3\): ratio \(\approx 1/9\). <strong>9× fewer multiplications</strong> for a small accuracy drop. In practice MobileNet achieves 70.6 % top-1 accuracy with 4.2 M parameters versus VGG's 71.5 % with 138 M parameters — roughly the same accuracy at <em>30× the parameter efficiency</em>.</p>
+
+                        <h3>2.2 MobileNetV2 (2018) — Inverted Bottleneck (MBConv)</h3>
+
+                        <p>MobileNetV2 introduces the <strong>inverted bottleneck</strong> block, which goes wide-narrow-wide in a way that is the <em>opposite</em> of the ResNet bottleneck:</p>
+
+                        <table class="arch_table">
+                            <thead><tr><th></th><th>ResNet Bottleneck</th><th>MobileNetV2 MBConv</th></tr></thead>
+                            <tbody>
+                                <tr><td>Pattern</td><td>wide → narrow → wide</td><td>narrow → wide → narrow</td></tr>
+                                <tr><td>Step 1</td><td>1×1 compress (÷4)</td><td>1×1 <em>expand</em> (×6, expansion factor \(t\))</td></tr>
+                                <tr><td>Step 2</td><td>3×3 conv (full depth)</td><td>3×3 <strong>depthwise</strong> conv</td></tr>
+                                <tr><td>Step 3</td><td>1×1 expand (×4)</td><td>1×1 project back (no ReLU!)</td></tr>
+                                <tr><td>Skip?</td><td>Yes (projection if needed)</td><td>Yes (only if stride=1 and same dims)</td></tr>
+                            </tbody>
+                        </table>
+
+                        <p>The ReLU is omitted after the final projection step because ReLU on narrow (bottleneck-output) channels destroys information. The wide depthwise layer has ReLU6 (clipped at 6) which is numerically stable for fixed-point inference. MobileNetV2 has 20 learnable layers; all depth-wise separable.</p>
+
+                        <!-- ══════════════════════════════════════════════
+                             PART 3 — NAS
+                        ══════════════════════════════════════════════ -->
+                        <hr class="section_divider">
+                        <h2>3 · Neural Architecture Search (NAS)</h2>
+
+                        <p>Instead of designing architectures by hand, NAS automates the search. Three components:</p>
+
+                        <div class="reg_grid">
+                            <div class="reg_card">
+                                <h5>Search Space</h5>
+                                <p>Defines the possible architectures: which operations (conv, pooling, skip), how many blocks, how to connect them. Heavily determines the quality of the result.</p>
+                            </div>
+                            <div class="reg_card">
+                                <h5>Search Strategy</h5>
+                                <p>Reinforcement learning (reward = validation accuracy) or evolutionary / genetic algorithms. An RL controller samples candidate architectures and trains a child network to evaluate them.</p>
+                            </div>
+                            <div class="reg_card">
+                                <h5>Performance Estimation</h5>
+                                <p>Training every candidate to convergence is too expensive. Alternatives: short training runs + extrapolation, weight sharing (DARTS — one supernetwork), or zero-shot proxies.</p>
+                            </div>
+                            <div class="reg_card">
+                                <h5>Outcome</h5>
+                                <p>NAS often finds non-intuitive architectures (e.g., asymmetric filters, unusual skip patterns). In practice it is usually run with a hardware latency constraint as a secondary objective.</p>
+                            </div>
+                        </div>
+
+                        <!-- ══════════════════════════════════════════════
+                             PART 4 — EfficientNet
+                        ══════════════════════════════════════════════ -->
+                        <hr class="section_divider">
+                        <h2>4 · EfficientNet (2019) — Compound Scaling <span class="innovation_tag">Exam Focus</span></h2>
+
+                        <p>There are three ways to scale a CNN up from a baseline:</p>
+                        <ul>
+                            <li><strong>Width scaling</strong> — more channels per layer (more features, up to a point)</li>
+                            <li><strong>Depth scaling</strong> — more layers (larger receptive field, but vanishing gradients)</li>
+                            <li><strong>Resolution scaling</strong> — larger input images (more spatial detail)</li>
+                        </ul>
+
+                        <p>Each individual dimension exhibits diminishing returns. Tan &amp; Le (Google) showed that the three dimensions are <em>complementary</em> and should be scaled together. Given a resource budget \(\phi\), they scale with fixed ratios \(\alpha, \beta, \gamma\) derived by a small grid search:</p>
+
+                        <div class="math_block">
+                        \[\text{depth:} \; d = \alpha^\phi, \quad \text{width:} \; w = \beta^\phi, \quad \text{resolution:} \; r = \gamma^\phi\]
+                        \[\text{subject to: } \alpha \cdot \beta^2 \cdot \gamma^2 \approx 2 \quad (\text{FLOPs roughly double per } \phi)\]
+                        </div>
+
+                        <p>EfficientNet-B0 (the baseline) was found by NAS. EfficientNet B1–B7 are obtained by compund-scaling B0 with increasing \(\phi\).</p>
+
+                        <table class="arch_table">
+                            <thead><tr><th>Model</th><th>Top-1 Acc.</th><th>Params</th></tr></thead>
+                            <tbody>
+                                <tr><td>ResNet-50</td><td>76.0 %</td><td>26 M</td></tr>
+                                <tr class="highlight"><td>EfficientNet-B0</td><td>77.1 %</td><td>5.3 M</td></tr>
+                                <tr><td>EfficientNet-B4</td><td>83.0 %</td><td>19 M</td></tr>
+                                <tr><td>EfficientNet-B7</td><td>84.4 %</td><td>66 M</td></tr>
+                            </tbody>
+                        </table>
+
+                        <p>EfficientNet-B0 already beats ResNet-50 at 5× fewer parameters. The larger variants set new records across many transfer learning tasks.</p>
+
+                        <!-- ══════════════════════════════════════════════
+                             PART 5 — ConvNeXt
+                        ══════════════════════════════════════════════ -->
+                        <hr class="section_divider">
+                        <h2>5 · ConvNeXt (2022) — Modernising the CNN</h2>
+
+                        <p>After Vision Transformers (ViT) started outperforming CNNs, Liu et al. asked: <em>"What if we systematically modernised a ResNet-50 with the design decisions from ViT's training recipe?"</em> The result, ConvNeXt, is a pure CNN that matches or beats ViT on ImageNet with the same training setup. The key changes (each improving accuracy step by step):</p>
+
+                        <table class="arch_table">
+                            <thead><tr><th>Change</th><th>From (ResNet)</th><th>To (ConvNeXt)</th></tr></thead>
+                            <tbody>
+                                <tr><td>Training recipe</td><td>90 epoch, standard</td><td>300 epoch, AdamW, modern augmentation</td></tr>
+                                <tr><td>Macro design</td><td>Uniform stage ratio</td><td>Stage ratio 3:3:9:3 (Swin-inspired)</td></tr>
+                                <tr><td>Stem</td><td>7×7 stride-2 + max pool</td><td>4×4 non-overlapping (patchify)</td></tr>
+                                <tr><td>Bottleneck</td><td>1×1 → 3×3 → 1×1 (standard)</td><td>Inverted bottleneck (MobileNetV2-style)</td></tr>
+                                <tr><td>Kernel size</td><td>3×3 in bottleneck neck</td><td><strong>7×7 depthwise</strong> (large receptive field)</td></tr>
+                                <tr><td>Activation</td><td>ReLU (all layers)</td><td><strong>GELU</strong> (one per block)</td></tr>
+                                <tr><td>Normalisation</td><td>Batch Norm</td><td><strong>Layer Norm</strong></td></tr>
+                                <tr><td>Downsampling</td><td>Strided conv in block</td><td>Separate 2×2 stride-2 LN layer</td></tr>
+                            </tbody>
+                        </table>
+
+                        <p>The large depthwise kernel (7×7) captures long-range context within the CNN framework, closing the gap with the attention mechanism in ViT. ConvNeXt-T matches Swin-T on ImageNet and runs faster on standard hardware. It is increasingly used as a backbone in robotics perception.</p>
+
+                        <!-- ══════════════════════════════════════════════
+                             PART 6 — OVERFITTING & REGULARISATION
+                        ══════════════════════════════════════════════ -->
+                        <hr class="section_divider">
+                        <h2>6 · Overfitting and the Generalisation Gap <span class="innovation_tag">Exam Focus</span></h2>
+
+                        <p>After choosing an architecture, the practical challenge is making the trained model generalise to unseen data. Two failure modes:</p>
+
+                        <ul>
+                            <li><strong>Overfitting</strong>: training loss decreases but validation loss <em>increases</em>. The model memorises training data. Fix: reduce model capacity, add regularisation.</li>
+                            <li><strong>Generalisation gap</strong>: both losses converge, but validation loss is consistently higher than training loss. The gap measures how much is lost at deployment. Fix: data augmentation, label smoothing.</li>
+                        </ul>
+
+                        <p>In the large-scale regime (ImageNet, fine-tuning on millions of images) the generalisation gap is what matters most. The following techniques all attack it.</p>
+
+                        <h3>6.1 Regularisation techniques</h3>
+
+                        <h4>Early Stopping</h4>
+                        <p>Monitor validation loss every epoch. Stop training when it has not improved for \(k\) epochs. The model at the best validation epoch is saved. Simple and universally applicable — always use it.</p>
+
+                        <h4>L2-Regularisation / Weight Decay <span class="innovation_tag">Key Equation</span></h4>
+                        <p>Add a penalty to the loss that discourages large weights:</p>
+                        <div class="math_block">
+                        \[L(\theta) = \frac{1}{N}\sum_{i=1}^{N} \ell\!\left(y_i,\, f(\mathbf{x}_i;\theta)\right) + \lambda\|\theta\|^2\]
+                        </div>
+                        <p>Taking the gradient and plugging into SGD:</p>
+                        <div class="math_block">
+                        \[\theta_{k+1} = \theta_k - \eta\,\frac{\partial L}{\partial \theta} - \lambda\,\theta_k\]
+                        </div>
+                        <p>The \(-\lambda\theta_k\) term <em>decays</em> (shrinks) the weights each step — hence "weight decay". The hyperparameter \(\lambda\) (typically \(10^{-4}\) to \(5\times10^{-4}\)) controls the trade-off.</p>
+
+                        <div class="note_box">
+                            <strong>L2 vs weight decay with Adam:</strong> With SGD, L2 regularisation and weight decay are mathematically equivalent. With <strong>Adam they are not</strong> — because Adam adapts the learning rate per parameter, the L2 gradient gets scaled differently from the direct weight decay. Always use <strong>AdamW</strong> (Adam with decoupled weight decay) when combining Adam with regularisation. Apply weight decay <strong>only to weights</strong> of conv and FC layers — not to biases, BatchNorm scale parameters (\(\gamma\)), or BatchNorm shift parameters (\(\beta\)).
+                        </div>
+
+                        <h4>Dropout</h4>
+                        <p>During training, randomly zero each activation with probability \(p\) (typically \(p = 0.1\)–\(0.5\)). This prevents individual neurons from becoming co-adapted — the network cannot rely on any single feature. At test time, multiply all activations by \((1-p)\) to maintain the expected output scale (or equivalently, scale during training — "inverted dropout").</p>
+                        <p>In CNNs, dropout is usually applied only after the FC layers (or at the global pooling output), not inside conv stacks — conv layers are already regularised by weight sharing and BN.</p>
+
+                        <h4>Stochastic Depth</h4>
+                        <p>Huang et al. (2016) proposed randomly <em>dropping entire ResNet blocks</em> during training — replace the block output with just the skip connection \(\mathbf{y} = \mathbf{x}\). The drop probability increases linearly with depth: shallow blocks are always kept (they learn basic features); deeper blocks are more frequently dropped (they learn finer details that can be varied). A typical schedule: layer \(l\) of \(L\) total has survival probability \(1 - \frac{l}{L}(1-p_L)\) where \(p_L = 0.5\).</p>
+                        <p>This also dramatically reduces training time (fewer blocks computed each forward pass) and is used in ConvNeXt, EfficientNet, and Vision Transformers.</p>
+
+                        <h4>Label Smoothing</h4>
+                        <p>Standard cross-entropy trains towards a one-hot target: 100 % confidence in one class. This makes the model <em>overconfident</em> and its predictions poorly calibrated. Label smoothing mixes the one-hot target with the uniform distribution:</p>
+                        <div class="math_block">
+                        \[\tilde{y}_k = (1 - \varepsilon)\,y_k + \frac{\varepsilon}{K}\]
+                        </div>
+                        <p>where \(K\) is the number of classes and \(\varepsilon\) is small (typically 0.1). The model is now penalised for being too certain. This improves calibration and generalisation, especially when combined with mixup.</p>
+
+                        <!-- ══════════════════════════════════════════════
+                             PART 7 — DATA AUGMENTATION
+                        ══════════════════════════════════════════════ -->
+                        <hr class="section_divider">
+                        <h2>7 · Data Augmentation <span class="innovation_tag">Exam Focus</span></h2>
+
+                        <p>Data augmentation attacks the generalisation gap from the data side: instead of changing the model, create more diverse training examples by transforming existing ones. The label (class) is assumed to be invariant to the transformation.</p>
+
+                        <h3>7.1 Standard augmentations</h3>
+                        <div class="aug_example">
+                            <strong>Horizontal flip</strong>
+                            <p>Mirror the image left-right. Label-invariant for most classification tasks (a dog is still a dog). Never apply vertical flip without justification — an upside-down dog is unusual.</p>
+                        </div>
+                        <div class="aug_example">
+                            <strong>Random crop &amp; resize</strong>
+                            <p>Crop a random subregion and resize back to the input resolution. Teaches the network that the object can appear anywhere and at different scales. Standard ImageNet training crops 224×224 from 256×256 images.</p>
+                        </div>
+                        <div class="aug_example">
+                            <strong>Colour distortion</strong>
+                            <p>Randomly perturb brightness, contrast, saturation, hue. Teaches invariance to lighting conditions — critical for outdoor robotics.</p>
+                        </div>
+
+                        <h3>7.2 RandAugment <span class="innovation_tag">Key Method</span></h3>
+                        <p>Cubuk et al. (2020) sampled \(N\) augmentation policies from a fixed set (including shear, rotate, posterize, solarize, equalize, etc.) and applied them sequentially with a single global magnitude \(M\). The search space is a simple 2D grid: \((N, M)\) — sweep on a small validation set. This beats the complex per-layer policy search of AutoAugment at a fraction of the search cost.</p>
+
+                        <div class="note_box">
+                            <strong>RandAugment at a glance:</strong>
+                            Pick \(N\) operations randomly, apply each with magnitude \(M\). Tune \(N \in \{1,2,3\}\) and \(M \in \{5,...,30\}\) by grid search on validation.
+                        </div>
+
+                        <h3>7.3 Mixup <span class="innovation_tag">Key Method</span></h3>
+                        <p>Zhang et al. (2018) create synthetic training samples by linearly interpolating pairs of training examples <em>and their labels</em>:</p>
+                        <div class="math_block">
+                        \[\tilde{\mathbf{x}} = \lambda\,\mathbf{x}_i + (1-\lambda)\,\mathbf{x}_j\]
+                        \[\tilde{y} = \lambda\,y_i + (1-\lambda)\,y_j, \quad \lambda \sim \text{Beta}(\alpha, \alpha)\]
+                        </div>
+                        <p>The resulting image looks like a ghost-superposition of two examples. The model is trained to produce the interpolated label distribution. Mixup enforces <em>linear behaviour</em> between training examples and strongly regularises over-confidence.</p>
+
+                        <h3>7.4 Cutout / Random Erasing</h3>
+                        <p>DeVries &amp; Taylor (2017) randomly select a rectangular region of an image and fill it with the channel mean (making it invisible/uninformative). This acts like <em>dropout applied at input level</em>: the network must classify using partial information, learning more distributed representations. Random Erasing is a variant that fills with random pixel values instead of the mean.</p>
+
+                        <h3>7.5 CutMix <span class="innovation_tag">Key Method</span></h3>
+                        <p>Yun et al. (2019) combine Cutout and Mixup: instead of filling the erased region with noise, paste a crop from another image. Mix the labels by area proportion:</p>
+                        <div class="math_block">
+                        \[\tilde{\mathbf{x}} = \mathbf{M} \odot \mathbf{x}_i + (1 - \mathbf{M}) \odot \mathbf{x}_j\]
+                        \[\tilde{y} = \lambda\,y_i + (1-\lambda)\,y_j, \quad \lambda = \frac{\text{area of crop}}{H \times W}\]
+                        </div>
+                        <p>where \(\mathbf{M}\) is a binary mask. CutMix outperforms Cutout and Mixup individually, especially for object detection tasks (where localisation matters). All pixels are from real data, unlike Mixup's ghost images.</p>
+
+                        <h3>7.6 Which augmentation for which task?</h3>
+                        <table class="arch_table">
+                            <thead><tr><th>Augmentation</th><th>Classification</th><th>Detection / Segmentation</th><th>Notes</th></tr></thead>
+                            <tbody>
+                                <tr><td>Standard (flip + crop)</td><td>✓ Strong baseline</td><td>✓ Always</td><td>—</td></tr>
+                                <tr><td>RandAugment</td><td>✓✓</td><td>✓ (mild M)</td><td>Tune N, M per task</td></tr>
+                                <tr><td>Mixup</td><td>✓✓</td><td>✗ (ghost labels)</td><td>Bad for localisation</td></tr>
+                                <tr><td>Cutout</td><td>✓</td><td>✓</td><td>Simple, effective</td></tr>
+                                <tr><td>CutMix</td><td>✓✓</td><td>✓✓</td><td>Best for detection</td></tr>
+                            </tbody>
+                        </table>
+
+                        <!-- ══════════════════════════════════════════════
+                             PART 8 — PRACTICAL ADVICE
+                        ══════════════════════════════════════════════ -->
+                        <hr class="section_divider">
+                        <h2>8 · Practical Advice</h2>
+
+                        <h3>8.1 What do modern models actually use?</h3>
+                        <p>Training recipes for state-of-the-art models combine many of the above techniques:</p>
+                        <table class="arch_table">
+                            <thead><tr><th>Model</th><th>Augmentation</th><th>Regularisation</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td>EfficientNet</td>
+                                    <td>AutoAugment</td>
+                                    <td>Stochastic Depth + Dropout</td>
+                                </tr>
+                                <tr>
+                                    <td>ConvNeXt</td>
+                                    <td>Mixup + CutMix + RandAugment + Random Erasing</td>
+                                    <td>Stochastic Depth + Label Smoothing + Weight Decay</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h3>8.2 Starting point recommendation</h3>
+                        <ol>
+                            <li><strong>Baseline:</strong> ResNet-50 pre-trained on ImageNet. Reliable, well-understood, fast to fine-tune.</li>
+                            <li><strong>If you need better accuracy:</strong> EfficientNet-B4 or ConvNeXt-T. Similar parameter count, noticeably better performance.</li>
+                            <li><strong>If you need to run on embedded hardware:</strong> MobileNetV2 or MobileNetV3. </li>
+                            <li><strong>For everything else:</strong> do not train from scratch. Fine-tune ImageNet pre-trained weights.</li>
+                        </ol>
+
+                        <h3>8.3 Use TIMM</h3>
+                        <p>The <a href="https://github.com/huggingface/pytorch-image-models" target="_blank">pytorch-image-models (timm)</a> library has over 700 pre-trained models with a unified API. Never implement these architectures from scratch for production use.</p>
+                        <pre><code>pip install timm
+
+import timm
+# List available models
+timm.list_models('efficientnet*')
+
+# Load pretrained ResNet-50
+model = timm.create_model('resnet50', pretrained=True)
+
+# Fine-tune: replace classifier head for your task
+model = timm.create_model('resnet50', pretrained=True, num_classes=10)
+
+# Get data config (normalisation, input size) matching the pretrained weights
+data_config = timm.data.resolve_model_data_config(model)
+transforms = timm.data.create_transform(**data_config, is_training=True)</code></pre>
+
+                        <!-- ══════════════════════════════════════════════
+                             EXAM SUMMARY
+                        ══════════════════════════════════════════════ -->
+                        <hr class="section_divider">
+                        <div class="exam_tip">
+                            <strong>Exam Cheat Sheet</strong>
+                            <ul>
+                                <li><strong>AlexNet</strong>: 8 layers, 60 M params, ReLU + dropout, 16.4 %</li>
+                                <li><strong>VGG rules</strong>: 3×3 only; halve spatial → double filters; 138 M params; 7.3 %</li>
+                                <li><strong>GoogLeNet</strong>: Inception (parallel branches), 1×1 bottleneck, Global Avg Pooling replaces FC; 6.7 %</li>
+                                <li><strong>ResNet skip</strong>: \(\mathbf{y} = F(\mathbf{x}) + \mathbf{x}\); basic block = two 3×3; bottleneck = 1×1→3×3→1×1; 3.6 %</li>
+                                <li><strong>Depthwise sep.</strong>: \(\approx 1/K^2\) of standard conv cost (8–9× for 3×3)</li>
+                                <li><strong>MBConv</strong>: narrow → expand (×t) → depthwise → project → narrow (no ReLU on project)</li>
+                                <li><strong>EfficientNet compound scaling</strong>: scale depth \(\times\) width \(\times\) resolution together; ratio \(\alpha\beta^2\gamma^2 \approx 2\)</li>
+                                <li><strong>ConvNeXt</strong>: 7×7 depthwise, GELU, LayerNorm, inverted bottleneck — pure CNN matching ViT</li>
+                                <li><strong>Weight decay</strong>: \(\theta_{k+1} = \theta_k - \eta\partial L/\partial\theta - \lambda\theta_k\); use AdamW (not Adam + L2)</li>
+                                <li><strong>Label smoothing</strong>: \(\tilde{y}_k = (1-\varepsilon)y_k + \varepsilon/K\)</li>
+                                <li><strong>Mixup</strong>: mix images AND labels linearly; \(\lambda \sim \text{Beta}(\alpha,\alpha)\)</li>
+                                <li><strong>CutMix</strong>: paste a crop; label proportion = crop area / total area; best for detection</li>
+                                <li><strong>Stochastic Depth</strong>: drop entire blocks (keep skip); drop probability increases with depth</li>
+                            </ul>
+                        </div>
 
                         <div class="post_nav">
                             <div>
@@ -90,9 +567,11 @@
                                 <a href="blog.html">All Notes</a>
                             </div>
                         </div>
-                    </div>
-                </div>
 
+                    </div><!-- /post_body -->
+                </div><!-- /col-lg-8 -->
+
+                <!-- ── Sidebar ── -->
                 <div class="col-lg-4">
                     <div class="blog_right_sidebar">
 
@@ -114,13 +593,17 @@
                             <h4 class="widget_title">Topics</h4>
                             <ul class="list">
                                 <li><a href="#">ResNet</a></li>
-                                <li><a href="#">Transfer Learning</a></li>
-                                <li><a href="#">Architecture Design</a></li>
+                                <li><a href="#">Skip Connections</a></li>
                                 <li><a href="#">MobileNet</a></li>
-                                <li><a href="#">AlexNet</a></li>
-                                <li><a href="#">VGG</a></li>
-                                <li><a href="#">Residual Connections</a></li>
-                                <li><a href="#">Deep Learning</a></li>
+                                <li><a href="#">EfficientNet</a></li>
+                                <li><a href="#">ConvNeXt</a></li>
+                                <li><a href="#">Compound Scaling</a></li>
+                                <li><a href="#">Weight Decay</a></li>
+                                <li><a href="#">Label Smoothing</a></li>
+                                <li><a href="#">Mixup</a></li>
+                                <li><a href="#">CutMix</a></li>
+                                <li><a href="#">Data Augmentation</a></li>
+                                <li><a href="#">TIMM</a></li>
                             </ul>
                         </aside>
 

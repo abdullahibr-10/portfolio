@@ -13,6 +13,29 @@
     <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/theme-minimal.css">
+    <!-- MathJax: only on this page -->
+    <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']],
+        packages: {'[+]': ['ams']}
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <style>
+    .code-inline {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 13px;
+        background: #f0f0f0;
+        padding: 1px 5px;
+        border: 1px solid #ddd;
+    }
+    </style>
 </head>
 <body class="blog_version">
 
@@ -67,57 +90,209 @@
                         <span class="post_course_tag">ML for Robotics &amp; Computer Vision · Lec 07</span>
                         <h1>Learning CNNs</h1>
                         <div class="post_meta">
-                            <span><i class="lnr lnr-calendar-full"></i>Nov 2025</span>
+                            <span><i class="lnr lnr-calendar-full"></i>June 2026</span>
                             <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
                         </div>
                     </div>
 
                     <div class="post_body">
-                        <p>Designing an architecture is only half the work. This lecture covers how CNNs are trained: backpropagation through convolutional layers, initialisation strategies, and regularisation and optimisation methods that make modern deep networks feasible to train.</p>
-
-                        <h2>1. Loss Functions</h2>
-                        <p>For multi-class classification with a softmax output layer, the standard loss is <strong>cross-entropy</strong>: L = −Σₖ yₖ log(ŷₖ) where y is the one-hot target and ŷ is the softmax output. This is equivalent to maximising the log-likelihood of the true class. For regression tasks (e.g., bounding box coordinates, pose estimation), <strong>Mean Squared Error</strong> L = (1/n) Σᵢ ||yᵢ − ŷᵢ||² is typical, though smooth L1 (Huber) loss is preferred when outliers are present.</p>
-
-                        <h2>2. Backpropagation Through Conv Layers</h2>
-                        <p>Backprop computes the gradient of the loss with respect to all parameters by the chain rule. For a conv layer with input X and kernel K producing output Y = X ★ K:</p>
-                        <ul>
-                            <li><strong>Gradient w.r.t. kernel K:</strong> ∂L/∂K = X ★ δ, where δ = ∂L/∂Y is the upstream gradient. This is a cross-correlation of the input with the upstream gradient — the same sliding operation as the forward pass.</li>
-                            <li><strong>Gradient w.r.t. input X (to pass to previous layer):</strong> ∂L/∂X = δ ★★ K, a full convolution (with padding) of the upstream gradient with the flipped kernel.</li>
-                        </ul>
-                        <p>Modern frameworks (PyTorch, TensorFlow) implement these as highly optimised CUDA kernels. Understanding the derivation helps debug shape errors and design custom layers.</p>
-
-                        <h2>3. Weight Initialisation</h2>
-                        <p>Initialising all weights to zero causes all neurons to compute the same gradient — the symmetry problem. All neurons remain identical after any number of updates. Instead:</p>
-                        <ul>
-                            <li><strong>Xavier (Glorot) initialisation:</strong> W ~ Uniform(−√(6/(nᵢₙ+nₒᵤₜ)), √(6/(nᵢₙ+nₒᵤₜ))). Designed to keep variance of activations constant through layers with tanh/sigmoid. Standard deviation: σ = √(1/nᵢₙ).</li>
-                            <li><strong>He initialisation:</strong> W ~ N(0, √(2/nᵢₙ)). Accounts for ReLU zeroing half the inputs; recommended for ReLU networks. Without this, variance shrinks layer by layer, leading to vanishing gradients in deep nets.</li>
-                        </ul>
-
-                        <h2>4. Batch Normalisation</h2>
-                        <p>Batch Norm (Ioffe &amp; Szegedy, 2015) normalises the pre-activation of each layer within a mini-batch of size m:</p>
-
-                        <div class="math_block">
-                            μ_B = (1/m) Σᵢ xᵢ,  σ²_B = (1/m) Σᵢ (xᵢ − μ_B)²
-            <br>
-                            x̂ᵢ = (xᵢ − μ_B) / √(σ²_B + ε),  yᵢ = γ x̂ᵢ + β
+                        <div class="note_box">
+                            <p style="margin:0;">
+                                This lecture establishes the mathematical foundations and engineering mechanics of training Convolutional Neural Networks (CNNs) for visual perception in robotics. By the end of these notes, you will completely understand how parameter learning is framed as continuous empirical loss minimization, how gradient flow is orchestrated across modular compute graphs via backpropagation, the mechanical trade-offs of modern stochastic optimizers, and the crucial stabilization roles played by weight initialization and layer normalization.
+                            </p>
                         </div>
 
-                        <p>Learnable parameters γ (scale) and β (shift) allow the network to recover any desired distribution if needed. Benefits: (1) reduces internal covariate shift — each layer sees more stable input distributions; (2) allows higher learning rates; (3) acts as a mild regulariser (adds noise through batch statistics); (4) reduces sensitivity to initialisation. At test time, μ_B and σ²_B are replaced with running averages collected during training.</p>
+                        <h2>1 · Loss Functions &amp; Empirical Objective Minimization</h2>
+                        <p>
+                            To teach a neural network architecture to perceive its environment, we must define a quantifiable scalar metric that measures the divergence between our model's predicted hypothesis and the actual ground truth targets. Formally, for a training dataset containing \( N \) independent samples, the global empirical objective function \( L(\theta) \) parameterized by the network weights \( \theta \) is formulated as:
+                        </p>
+                        <div class="math_block">\[ L(\theta) = \frac{1}{N} \sum_{i=1}^{N} l(y_i, f(x_i; \theta)) \]</div>
+                        <p>
+                            Here, \( l(y_i, f(x_i; \theta)) \in \mathbb{R} \) represents the individual sample loss evaluating the exact scalar penalty between the target label \( y_i \) and the network prediction \( f(x_i; \theta) \). Depending on whether our robotic perception task dictates continuous coordinate regression or discrete semantic classification, we rely on two primary loss formulations:
+                        </p>
 
-                        <h2>5. Dropout</h2>
-                        <p>Dropout (Srivastava et al., 2014) randomly sets each neuron's activation to 0 with probability p during training (typically p = 0.5 for FC layers, p = 0.1–0.2 for conv layers). At test time, no dropout is applied but activations are multiplied by (1−p) to maintain the expected sum. Dropout can be interpreted as training an ensemble of 2ⁿ sub-networks (for n neurons) — at test time all models are averaged in a single forward pass. It is most effective in FC layers; BatchNorm has largely replaced it in conv layers.</p>
+                        <h3>L2 Loss (Mean Squared Error)</h3>
+                        <p>
+                            For regression tasks—such as predicting continuous robot end-effector velocities or visual bounding box coordinate offsets—we rely on the L2 loss. The individual sample penalty is defined as:
+                        </p>
+                        <div class="math_block">\[ l(y_i, f(x_i)) = (y_i - f(x_i; \theta))^2 \]</div>
+                        <p>
+                            Intuitively, the quadratic penalty forces predicted continuous values \( f(x) \) to converge tightly toward target values \( y \). From a strict probabilistic standpoint, minimizing the L2 loss is mathematically equivalent to maximizing the negative log-likelihood of the observed data assuming a normally distributed zero-mean Gaussian error. In PyTorch, this is instantiated via <span class="code-inline">torch.nn.MSELoss</span>. When evaluating a mini-batch of size \( N \), the unreduced batch loss vector is represented as \( l(x, y) = L = \{l_1, \dots, l_N\} \), where each element is \( l_n = (x_n - y_n)^2 \).
+                        </p>
 
-                        <h2>6. Optimisers</h2>
-                        <p>Beyond vanilla SGD (θ ← θ − α∇L), several improved optimisers are standard:</p>
-                        <ul>
-                            <li><strong>SGD + Momentum:</strong> accumulate a velocity vector v ← β·v − α∇L, then θ ← θ + v. Momentum (β ≈ 0.9) accelerates through consistent gradient directions and dampens oscillations.</li>
-                            <li><strong>RMSProp:</strong> maintain a running average of squared gradients E[g²]ₜ = β·E[g²]_{t-1} + (1−β)·g²ₜ. Update: θ ← θ − α·gₜ / √(E[g²]ₜ + ε). Adapts learning rate per parameter.</li>
-                            <li><strong>Adam:</strong> combines momentum and per-parameter adaptive rates. Maintains first moment mₜ = β₁mₜ₋₁ + (1−β₁)gₜ and second moment vₜ = β₂vₜ₋₁ + (1−β₂)gₜ². Bias-corrected: m̂ₜ = mₜ/(1−β₁ᵗ), v̂ₜ = vₜ/(1−β₂ᵗ). Update: θ ← θ − α·m̂ₜ/(√v̂ₜ + ε). Default hyperparameters β₁=0.9, β₂=0.999, ε=10⁻⁸, α=0.001 work well across many tasks.</li>
-                        </ul>
-
+                        <h3>Cross-Entropy Loss</h3>
+                        <p>
+                            For multi-class semantic classification (e.g., categorizing an image as an automobile, truck, or dog), we evaluate categorical probability distributions. Given raw unnormalized network output scores (logits) \( f_1(x), \dots, f_C(x) \) spanning \( C \) distinct classes, we map them into valid probability space using a Softmax activation:
+                        </p>
+                        <div class="math_block">\[ P(y=j|x) = \text{softmax}_j(f_1(x), \dots, f_C(x)) = \frac{\exp(f_j(x))}{\sum_{k} \exp(f_k(x))} \]</div>
+                        <p>
+                            Evaluating the negative log-likelihood (NLL) for the correct target class index \( j \) yields our standard classification loss:
+                        </p>
+                        <div class="math_block">\[ l(j, f(x)) = -\log \frac{\exp(f_j(x))}{\sum_{k} \exp(f_k(x))} = -f_j(x) + \log\left(\sum_{k} \exp(f_k(x))\right) \]</div>
+                        <p>
+                            To understand why this negative log-likelihood represents "cross-entropy", recall information theory. The cross-entropy \( H(P, Q) \) between a true target distribution \( P \) and an estimated network distribution \( Q \) is defined as:
+                        </p>
+                        <div class="math_block">\[ H(P, Q) = -\sum_{k} P(x_k) \log Q(x_k) \]</div>
+                        <p>
+                            In standard classification, our target label \( j \) is represented as a deterministic one-hot distribution vector \( P(x) = (0, \dots, 0, 1, 0, \dots, 0) \) where only the \( j \)-th entry equals 1. Substituting this one-hot \( P(x) \) and our Softmax hypothesis \( Q(x) \) into the definition collapses the summation entirely to \( -1 \log Q(x_j) \), perfectly matching our negative log-likelihood derivation. Note that \( P(x) \) can also accommodate soft target distributions, such as those utilized in label smoothing.
+                        </p>
                         <div class="note_box">
-                            <strong>Practical Note</strong>
-                            Adam converges quickly but sometimes generalises slightly worse than SGD with momentum + cosine annealing. A common strategy: use Adam for fast initial convergence, then switch to SGD + momentum for the final training phase to squeeze out extra accuracy.
+                            <strong>Exam Pitfall · PyTorch Cross-Entropy Implementation:</strong> In PyTorch, the criterion <span class="code-inline">torch.nn.CrossEntropyLoss</span> combines <span class="code-inline">LogSoftmax</span> and <span class="code-inline">NLLLoss</span> into one single highly optimized numerical class. Consequently, you must feed it <em>raw, unnormalized logits</em> rather than post-softmax probabilities. It expects target class indices strictly as integers within the range \( [0, C-1] \). Furthermore, it accepts an optional 1D <span class="code-inline">weight</span> tensor to rebalance gradient penalties across highly unbalanced training sets.
+                        </div>
+
+                        <h2>2 · Backpropagation &amp; Compute Graphs</h2>
+                        <p>
+                            Once our scalar objective \( L(\theta) \) is established, gradient-based optimization dictates that we compute its partial derivatives to determine the precise direction in which to adjust our parameter weights to minimize loss. Because deep neural networks are deeply nested compositions of non-linear functions—e.g., \( L(\theta_1, \theta_2, \theta_3) = f_3(f_2(f_1(x; \theta_1); \theta_2); \theta_3) \)—we compute these derivatives systematically using the multivariate chain rule.
+                        </p>
+                        <div class="math_block">\[ \frac{\partial L}{\partial \theta_3} = \frac{\partial L}{\partial f_3} \frac{\partial f_3}{\partial \theta_3}, \quad \frac{\partial L}{\partial \theta_2} = \frac{\partial L}{\partial f_3} \left[ \frac{\partial f_3}{\partial f_2} \frac{\partial f_2}{\partial \theta_2} \right], \quad \frac{\partial L}{\partial \theta_1} = \frac{\partial L}{\partial f_3} \frac{\partial f_3}{\partial f_2} \left[ \frac{\partial f_2}{\partial f_1} \frac{\partial f_1}{\partial \theta_1} \right] \]</div>
+
+                        <h3>Compute Graphs &amp; Local Connectivity</h3>
+                        <p>
+                            To resolve the complex order of computation, we compile operational layers into a directed graph. In a compute graph, nodes encode distinct mathematical operations, while directed edges determine information flow and operational dependencies. Active training proceeds across two sequential phases:
+                        </p>
+                        <ul>
+                            <li><strong>Forward Pass:</strong> We traverse the directed graph from inputs to outputs, evaluating and caching all intermediate operational activations.</li>
+                            <li><strong>Backward Pass:</strong> We traverse backward from the loss, passing gradient "messages" along the edges via the chain rule to reuse calculated derivatives.</li>
+                        </ul>
+                        <p>
+                            The fundamental elegance of backpropagation lies in <strong>local connectivity</strong>. An individual compute node does not need to understand the global network architecture; computing its derivatives involves only local information. For an arbitrary operation \( z = f(x, y) \), the local backward pass is governed by a universal operational product:
+                        </p>
+                        <div class="math_block">\[ \text{downstream gradient} = \text{upstream gradient} \times \text{local gradient} \]</div>
+                        <p>
+                            Mathematically, if the upstream gradient arriving at the node's output is \( \frac{\partial L}{\partial z} \), the node simply multiplies it by its own analytic local partial derivatives \( \frac{\partial z}{\partial x} \) and \( \frac{\partial z}{\partial y} \) to calculate downstream gradients \( \frac{\partial L}{\partial x} \) and \( \frac{\partial L}{\partial y} \) backward along its incident edges.
+                        </p>
+
+                        <h3>Vector Backpropagation &amp; Jacobians</h3>
+                        <p>
+                            When transitioning from scalar nodes to multi-dimensional tensor transformations, our local derivatives expand into matrices. For a layer mapping an input vector \( x \in \mathbb{R}^N \) to an output vector \( f(x) \in \mathbb{R}^M \), the local derivative is the full Jacobian matrix \( J \in \mathbb{R}^{M \times N} \) containing all first-order partial derivatives:
+                        </p>
+                        <div class="math_block">\[ \frac{df}{dx} = \begin{pmatrix} \frac{\partial f_1}{\partial x_1} & \dots & \frac{\partial f_1}{\partial x_N} \\ \vdots & \ddots & \vdots \\ \frac{\partial f_M}{\partial x_1} & \dots & \frac{\partial f_M}{\partial x_N} \end{pmatrix} \]</div>
+                        <p>
+                            If our node processes an input tensor \( x \in \mathbb{R}^{D_x} \) and weight parameter \( y \in \mathbb{R}^{D_y} \) to yield \( z \in \mathbb{R}^{D_z} \), receiving an upstream gradient vector \( \frac{\partial L}{\partial z} \in \mathbb{R}^{1 \times D_z} \), the downstream gradients are computed via matrix multiplication with the local Jacobians \( \frac{\partial z}{\partial x} \in \mathbb{R}^{D_z \times D_x} \) and \( \frac{\partial z}{\partial y} \in \mathbb{R}^{D_z \times D_y} \).
+                        </p>
+
+                        <h3>Mechanics of ReLU &amp; Memory Overhead</h3>
+                        <p>
+                            Consider the element-wise Rectified Linear Unit activation \( f(x) = \max(0, x) \). Analyzing its downstream gradient vector shows that it acts as a dynamic conditional switch:
+                        </p>
+                        <div class="math_block">\[ \frac{\partial L}{\partial x_i} = \begin{cases} \frac{\partial L}{\partial y_i}, & \text{if } x_i > 0 \\ 0, & \text{otherwise} \end{cases} \]</div>
+                        <p>
+                            Consequently, ReLU actively "blocks" partial derivatives from flowing backward through compute nodes where the forward activation was zero or negative. Notice that while the theoretical Jacobian of a fully connected layer or ReLU is a massive matrix, deep learning frameworks do not construct these matrices explicitly in memory; instead, they evaluate the vector-Jacobian products dynamically on the fly.
+                        </p>
+                        <div class="note_box">
+                            <strong>Hardware &amp; Framework Insight:</strong> In PyTorch custom <span class="code-inline">torch.autograd.Function</span> classes, intermediate tensors needed to evaluate analytic local gradients are explicitly cached during the forward pass via <span class="code-inline">ctx.save_for_backward(x, y)</span> and retrieved during the backward pass via <span class="code-inline">ctx.saved_tensors</span>. Because the forward pass must cache these intermediate activations across the entire compute graph, training a deep network requires roughly an <em>additional model size in active GPU memory</em> compared to pure test-time inference. To prevent out-of-memory errors in massive architectures, we apply <strong>gradient checkpointing</strong>, discarding intermediate activations and storing only "heavy" forward passes, re-evaluating intermediate steps dynamically on the fly during the backward pass.
+                        </div>
+
+                        <h2>3 · Optimization Algorithms</h2>
+                        <p>
+                            With parameter gradients calculated, we must apply an iterative optimization method to step down the loss surface. Evaluating the exact analytic gradient \( \frac{dL}{d\theta} \) over all data (\( N \approx 10^6 \)) at every step is computationally intractable. Instead, Stochastic Gradient Descent (SGD) computes many small inaccurate updates using a small mini-batch of examples (e.g., \( N = 32, 64, 128 \)) randomly sampled from all training data.
+                        </p>
+                        <div class="math_block">\[ \theta_t = \theta_{t-1} - \eta \frac{dL}{d\theta} \]</div>
+                        <p>
+                            Here, \( \eta \) represents the hyperparameter learning rate. Standard SGD exhibits slow convergence in anisotropic ravines—where the loss surface curves much more steeply in one dimension than another—resulting in oscillations across the valley and slow progress along the floor. Saddle points can stall learning entirely.
+                        </p>
+
+                        <h3>Momentum &amp; Nesterov Acceleration</h3>
+                        <p>
+                            To dampen oscillations and build physical inertia across flat plateaus or saddle points, Polyak (1964) introduced <strong>Momentum</strong>. We maintain a velocity vector \( v_t \) that computes a moving average over past updates and the current gradient, dampened by a friction parameter \( \gamma \) (typically 0.9):
+                        </p>
+                        <div class="math_block">\[ v_t = \gamma v_{t-1} + \eta \frac{dL}{d\theta}, \quad \theta_t = \theta_{t-1} - v_t \]</div>
+                        <p>
+                            Nesterov Accelerated Gradient (NAG, 1983) resolves overshooting by evaluating the gradient not at the current position \( \theta \), but at a projected "look-ahead position" \( \theta - \gamma v_{t-1} \). By accounting for future change ahead of time, NAG applies a braking correction before overshooting the minimum:
+                        </p>
+                        <div class="math_block">\[ v_t = \gamma v_{t-1} + \eta \frac{dL}{d(\theta - \gamma v_{t-1})}, \quad \theta_t = \theta_{t-1} - v_t \]</div>
+
+                        <h3>Adaptive Learning Rates: Adagrad &amp; RMSProp</h3>
+                        <p>
+                            Standard SGD and Momentum apply the same global learning rate \( \eta \) to all parameters simultaneously. Duchi et al. (2011) proposed <strong>Adagrad</strong>, adjusting the learning rate depending on accumulated squared gradients \( G_t \):
+                        </p>
+                        <div class="math_block">\[ G_t = G_{t-1} + \left(\frac{dL}{d\theta}\right)^2, \quad \theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{G_t + \epsilon}} \frac{dL}{d\theta} \]</div>
+                        <p>
+                            Because Adagrad monotonically sums squared gradients, \( G_t \) only increases — leading to a vanishing learning rate that eventually stops learning. Tieleman &amp; Hinton (2012) resolved this via <strong>RMSProp</strong>, replacing the monotonic summation with an exponentially decaying moving average (decay factor 0.9):
+                        </p>
+                        <div class="math_block">\[ G_t = 0.9\, G_{t-1} + 0.1 \left(\frac{dL}{d\theta}\right)^2, \quad \theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{G_t + \epsilon}} \frac{dL}{d\theta} \]</div>
+
+                        <h3>Adam</h3>
+                        <p>
+                            Kingma &amp; Ba (2015) formulated <strong>Adam</strong> (Adaptive Moment Estimation), combining momentum and parameter-wise adaptive learning rates. Adam maintains moving averages of past gradients (\( m_t \)) and past squared gradients (\( v_t \)):
+                        </p>
+                        <div class="math_block">\[ m_t = \beta_1 m_{t-1} + (1 - \beta_1) \frac{dL}{d\theta}, \quad v_t = \beta_2 v_{t-1} + (1 - \beta_2) \left(\frac{dL}{d\theta}\right)^2 \]</div>
+                        <p>
+                            Because \( m_0 \) and \( v_0 \) are zero-initialized, their estimates are biased toward zero in early iterations. Adam introduces bias-correction terms before executing the parameter update:
+                        </p>
+                        <div class="math_block">\[ \hat{m}_t = \frac{m_t}{1 - \beta_1^t}, \quad \hat{v}_t = \frac{v_t}{1 - \beta_2^t}, \quad \theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon}\, \hat{m}_t \]</div>
+                        <p>
+                            Standard defaults: \( \beta_1 = 0.9 \), \( \beta_2 = 0.999 \), \( \epsilon = 10^{-8} \).
+                        </p>
+                        <div class="note_box">
+                            <strong>The Practical Optimizer Recipe:</strong> Large-scale benchmarking (Schmidt et al., 2021) reveals that <em>there is generally no clear winner across all tasks and datasets</em>. The suggested recipe: run a set of optimizers with default settings and pick the best on validation. Adam converges quickly but sometimes generalises slightly worse than SGD + Momentum + cosine annealing for final fine-tuning.
+                        </div>
+
+                        <h2>4 · Initialization &amp; Normalization</h2>
+                        <p>
+                            Even with sophisticated optimizers, training deep networks can suffer from <strong>vanishing or exploding gradients</strong>. As activations and gradients multiply across consecutive layers, signals can either grow exponentially to infinity or collapse entirely to zero. Two structural solutions: careful initialization and normalization of layer outputs.
+                        </p>
+
+                        <h3>Weight Variance &amp; Xavier / He Initialization</h3>
+                        <p>
+                            Early architectures like AlexNet initialized weights from a naive Gaussian \( w \sim \mathcal{N}(0, 0.01) \). If the standard deviation is too small, activations collapse; if too large, they saturate.
+                        </p>
+                        <p>
+                            Glorot &amp; Bengio (2010) formulated <strong>Xavier Initialization</strong> to preserve unit variance across linear transformations. For a layer with \( D_{in} \) input units:
+                        </p>
+                        <div class="math_block">\[ w \sim \mathcal{N}\!\left(0,\; \frac{1}{\sqrt{D_{in}}}\right) \]</div>
+                        <p>
+                            For convolutions, \( D_{in} = K \cdot K \cdot C_{in} \). Xavier works well for symmetric activations (tanh, sigmoid) but not for ReLU, because ReLU actively zeroes out half the domain — variance is halved at every successive layer.
+                        </p>
+                        <p>
+                            He et al. (2015) introduced <strong>He Initialization</strong>, adding a \( \sqrt{2} \) gain factor to compensate for the halved ReLU variance:
+                        </p>
+                        <div class="math_block">\[ w \sim \mathcal{N}\!\left(0,\; \sqrt{2} \cdot \frac{1}{\sqrt{D_{in}}}\right) \]</div>
+                        <p>This gain correction preserves active representation energy across arbitrarily deep ReLU networks.</p>
+
+                        <h3>Batch Normalization</h3>
+                        <p>
+                            Ioffe &amp; Szegedy (2015) proposed <strong>Batch Normalization (BN)</strong> to counter internal covariate shift. For feature channel \( j \) over a mini-batch of \( N \) samples, BN computes channel-wise mean and variance:
+                        </p>
+                        <div class="math_block">\[ \mu_j = \frac{1}{N} \sum_{i=1}^{N} x_{i,j}, \quad \sigma_j^2 = \frac{1}{N} \sum_{i=1}^{N} (x_{i,j} - \mu_j)^2 \]</div>
+                        <p>
+                            It then normalizes activations and applies learnable affine parameters \( \gamma \) (scale) and \( \beta \) (shift):
+                        </p>
+                        <div class="math_block">\[ \hat{x}_{i,j} = \frac{x_{i,j} - \mu_j}{\sqrt{\sigma_j^2 + \epsilon}}\,\gamma + \beta \]</div>
+                        <p>
+                            The \( \epsilon \) prevents division by zero. Why learnable \( \gamma \) and \( \beta \)? If BN strictly forced zero mean and unit variance, it would destroy the network's expressive range. The learnable parameters allow the network to recover whatever distribution optimizes the downstream objective.
+                        </p>
+                        <p>
+                            During training, BN uses live mini-batch statistics. At test time, it uses running averages accumulated during training (exponential momentum 0.1):
+                        </p>
+                        <div class="math_block">\[ \bar{\mu}_j \leftarrow 0.9\,\bar{\mu}_j + 0.1\,\mu_j, \quad \bar{\sigma}_j^2 \leftarrow 0.9\,\bar{\sigma}_j^2 + 0.1\,\sigma_j^2 \]</div>
+                        <p>
+                            Architecturally, pre-activation (<span class="code-inline">Conv → BN → ReLU</span>) is most common, but post-activation (<span class="code-inline">Conv → ReLU → BN</span>) also works — empirically there is little difference.
+                        </p>
+
+                        <h3>Group Normalization</h3>
+                        <p>
+                            Batch Normalization's stability depends entirely on mini-batch size \( N \). High-resolution robotics tasks force hardware memory constraints to restrict \( N \) to very small values (2–8). With such small batches, BN statistics become noisy and validation error skyrockets.
+                        </p>
+                        <p>
+                            Wu &amp; He (2018) formulated <strong>Group Normalization (GN)</strong> to eliminate batch-dimension dependency. Instead of computing moments across the batch axis, GN divides feature channels into sub-groups and computes moments strictly across the spatial \( H, W \) dimensions within each group. GN statistics are <em>independent of \( N \)</em>, so Group Norm maintains stable behaviour even when \( N = 2 \). Other variants: Layer Norm (normalise across \( C, H, W \)), Instance Norm (normalise across \( H, W \) per channel independently).
+                        </p>
+
+                        <div style="background:#111;color:#fff;padding:18px 22px;margin:32px 0;">
+                            <strong style="display:block;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;color:#aaa;">Exam Cheat Sheet · Learning CNNs</strong>
+                            <ul style="margin:0;padding-left:18px;">
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>Loss:</strong> L2 penalizes squared errors for regression; Cross-Entropy = negative log-likelihood over Softmax for classification.</li>
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>PyTorch CrossEntropyLoss:</strong> expects raw logits (fuses LogSoftmax + NLLLoss); targets are integer class indices in \([0, C-1]\).</li>
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>Backprop:</strong> downstream gradient = upstream gradient × local gradient. ReLU blocks gradients wherever forward input ≤ 0.</li>
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>Jacobians:</strong> multi-dimensional layers have Jacobian matrices; VJP evaluated on the fly, not materialized in memory.</li>
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>Memory:</strong> caching activations for backward ≈ doubles GPU memory vs inference. Use gradient checkpointing for very deep nets.</li>
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>Optimizers in order:</strong> SGD → Momentum (velocity, \(\gamma=0.9\)) → NAG (look-ahead gradient) → Adagrad (monotonic \(G_t\), stalls) → RMSProp (decaying \(G_t\)) → Adam (both + bias correction).</li>
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>Adam defaults:</strong> \(\beta_1=0.9\), \(\beta_2=0.999\), \(\epsilon=10^{-8}\). Use AdamW (decoupled weight decay) when regularising.</li>
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>Xavier init:</strong> \(\mathcal{N}(0, 1/\sqrt{D_{in}})\) — for linear / tanh layers.</li>
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>He init:</strong> \(\mathcal{N}(0, \sqrt{2}/\sqrt{D_{in}})\) — for ReLU layers; compensates for zeroed half-domain.</li>
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>Batch Norm:</strong> normalises per channel across batch \(N\); running averages used at test time; unstable at small \(N\).</li>
+                                <li style="font-size:14px;margin-bottom:6px;"><strong>Group Norm:</strong> normalises per channel-group across \(H,W\); batch-size independent; preferred for small-batch robotics tasks.</li>
+                            </ul>
                         </div>
 
                         <div class="post_nav">
@@ -153,14 +328,16 @@
                         <aside class="single-sidebar-widget tag_cloud_widget">
                             <h4 class="widget_title">Topics</h4>
                             <ul class="list">
-                                <li><a href="#">Backpropagation</a></li>
-                                <li><a href="#">Batch Norm</a></li>
-                                <li><a href="#">Dropout</a></li>
-                                <li><a href="#">Adam Optimizer</a></li>
-                                <li><a href="#">Xavier Init</a></li>
-                                <li><a href="#">He Init</a></li>
+                                <li><a href="#">Loss Minimization</a></li>
                                 <li><a href="#">Cross-Entropy</a></li>
-                                <li><a href="#">Training CNNs</a></li>
+                                <li><a href="#">Backpropagation</a></li>
+                                <li><a href="#">Compute Graphs</a></li>
+                                <li><a href="#">Jacobian Matrices</a></li>
+                                <li><a href="#">Adam Optimizer</a></li>
+                                <li><a href="#">Momentum</a></li>
+                                <li><a href="#">He Initialization</a></li>
+                                <li><a href="#">Batch Normalization</a></li>
+                                <li><a href="#">Group Norm</a></li>
                             </ul>
                         </aside>
 
