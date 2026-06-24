@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>ICP — Known Data Association — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Graph SLAM</p>
+                    <h2>ICP — Known Data Association</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-slam-icp-known-da.html">ICP — Known DA</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 11</span>
+                        <h1>ICP — Known Data Association</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Nov 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Iterative Closest Point (ICP) is the workhorse algorithm for aligning 3D point clouds. It is used in LiDAR odometry, map building, and object pose estimation. This lecture addresses the simpler case where the point-to-point correspondences are already known — the core SVD-based alignment step.</p>
+
+                        <h2>1. Problem Setup</h2>
+                        <p>Given a source point set P = {p₁, ..., pₙ} and a target point set Q = {q₁, ..., qₙ} with <em>known correspondences</em> (pᵢ ↔ qᵢ), find the rigid transform (R, t) — R ∈ SO(3), t ∈ ℝ³ — that minimises:</p>
+
+                        <div class="math_block">
+                            E(R, t) = Σᵢ || qᵢ − (R pᵢ + t) ||²
+                        </div>
+
+                        <p>This is the least-squares rigid registration problem. It has a closed-form solution via SVD, avoiding iterative optimisation for this sub-problem.</p>
+
+                        <h2>2. SVD-Based Closed-Form Solution</h2>
+
+                        <pre><code>Given: P = {p₁..pₙ}, Q = {q₁..qₙ}, known correspondences pᵢ ↔ qᵢ
+
+1. Compute centroids:
+   p̄ = (1/n) Σ pᵢ,   q̄ = (1/n) Σ qᵢ
+
+2. Centre the point sets:
+   p'ᵢ = pᵢ − p̄,   q'ᵢ = qᵢ − q̄
+
+3. Compute cross-covariance matrix:
+   H = Σᵢ p'ᵢ q'ᵢᵀ    (3×3 matrix)
+
+4. SVD:  H = U Σ Vᵀ
+
+5. Compute rotation:
+   R = V Uᵀ
+   If det(R) = −1:  V[:,2] = −V[:,2], recompute R
+   (handles reflection ambiguity in degenerate configs)
+
+6. Compute translation:
+   t = q̄ − R p̄</code></pre>
+
+                        <p>The reflection fix in step 5 is important — SVD can produce a reflection (det = −1) in degenerate cases (e.g., all points coplanar). Negating the last column of V corrects this.</p>
+
+                        <h2>3. Why This Works</h2>
+                        <p>The key insight is that the optimal translation, given the optimal rotation, is t* = q̄ − R*p̄ (aligns centroids). Substituting this back, the cost reduces to minimising Σᵢ ||q'ᵢ − R p'ᵢ||², which is equivalent to maximising trace(RH). The SVD of H maximises this trace, and R = VUᵀ is the solution. The derivation uses the identity trace(RH) = trace(VᵀRU Σ) and the fact that VᵀRU ∈ SO(3) with trace ≤ 3 (achieved at identity).</p>
+
+                        <h2>4. Point-to-Point vs Point-to-Plane</h2>
+                        <p><strong>Point-to-point:</strong> minimises Σᵢ ||qᵢ − Rpᵢ − t||² — the 3D Euclidean distance between corresponding points. Simple and general, but converges slowly (linear rate) on smooth surfaces because many nearby points have similar point-to-point distances.</p>
+                        <p><strong>Point-to-plane:</strong> minimises the distance along the surface normal at each target point: Σᵢ (nᵢᵀ(qᵢ − Rpᵢ − t))². Projects the error onto the surface normal direction. Requires normals at target points (estimated from the neighbourhood). Converges much faster (super-linear) on planar/smooth surfaces because it correctly models surface geometry — a slide along the surface costs nothing.</p>
+
+                        <h2>5. Applications</h2>
+                        <ul>
+                            <li><strong>LiDAR odometry:</strong> LOAM and LeGO-LOAM use point-to-plane ICP on edge and planar features extracted from LiDAR scans to estimate 6-DOF odometry at 10 Hz.</li>
+                            <li><strong>Scan matching in 2D SLAM:</strong> align successive 2D laser scans to estimate robot motion.</li>
+                            <li><strong>Object pose estimation:</strong> given a known 3D model and a partial scan, recover the 6-DOF pose.</li>
+                            <li><strong>Loop closure:</strong> verify a candidate loop closure by registering the current scan to a stored map keyframe.</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>Known vs Unknown DA</strong>
+                            This lecture assumed correspondences are given. In practice, correspondences are unknown — we only have two point clouds. The next lecture covers the full ICP algorithm that alternates between finding correspondences (data association) and solving for the rigid transform (alignment).
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-slam-features-descriptors.html">Features: Descriptors</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-slam-icp-unknown-da.html">ICP — Unknown DA</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li class="active"><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">ICP</a></li>
+                                <li><a href="#">Point Cloud Registration</a></li>
+                                <li><a href="#">SVD Alignment</a></li>
+                                <li><a href="#">LiDAR Odometry</a></li>
+                                <li><a href="#">Point-to-Plane</a></li>
+                                <li><a href="#">Rigid Transform</a></li>
+                                <li><a href="#">LOAM</a></li>
+                                <li><a href="#">3D SLAM</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

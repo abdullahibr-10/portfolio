@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>ML for Computer Vision Tasks — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">ML for Robotics &amp; Computer Vision</p>
+                    <h2>ML for Computer Vision Tasks</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-mlrcv-ml-cv-tasks.html">ML for CV Tasks</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">ML for Robotics &amp; Computer Vision · Lec 05</span>
+                        <h1>ML for Computer Vision Tasks</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Before deep learning dominated computer vision, classical pipelines combined hand-crafted image features with the ML classifiers covered in previous lectures. Understanding these methods is important both historically and practically — they remain competitive for small datasets, low-power embedded systems, and interpretable applications.</p>
+
+                        <h2>1. The Classical CV + ML Pipeline</h2>
+                        <p>The standard recipe: Image → Feature Extraction → Feature Encoding → Classifier → Prediction. Feature extraction transforms raw pixels into a compact, semantically meaningful representation. The classifier (SVM, Random Forest, logistic regression) then operates in this feature space, not the raw pixel space. The quality of the features determines the ceiling on accuracy.</p>
+
+                        <h2>2. HOG — Histogram of Oriented Gradients</h2>
+                        <p>HOG (Dalal &amp; Triggs, 2005) was the state-of-the-art pedestrian detector before CNNs. The algorithm:</p>
+                        <ol>
+                            <li><strong>Gradient computation:</strong> convolve image with [-1, 0, 1] and [-1, 0, 1]ᵀ kernels to get Gx and Gy. Compute magnitude |G| = √(Gx² + Gy²) and orientation θ = arctan(Gy/Gx).</li>
+                            <li><strong>Cell histograms:</strong> divide image into 8×8 pixel cells. In each cell, accumulate a 9-bin histogram of gradient orientations (0°–180° unsigned), weighted by gradient magnitude.</li>
+                            <li><strong>Block normalisation:</strong> group 2×2 cells into overlapping blocks. Concatenate the four 9-bin histograms (36-dim vector) and L2-normalise. Normalisation gives contrast invariance.</li>
+                            <li><strong>Descriptor:</strong> concatenate all block vectors across the detection window. For a 64×128 pixel window: (7×15) blocks × 36 = 3,780-dimensional vector.</li>
+                        </ol>
+
+                        <h2>3. Sliding Window Detection</h2>
+                        <p>To detect objects at unknown locations and scales, we use sliding window search: evaluate a classifier at every possible position and scale in the image. Typically an image pyramid is built by resizing the image by a factor (e.g., 0.85) at each level, and the detection window slides across each pyramid level with a step size (e.g., 8 pixels). This yields thousands of candidate windows, most of which contain background.</p>
+                        <p><strong>Non-Maximum Suppression (NMS)</strong> removes duplicate detections: among overlapping boxes with high scores, retain only the highest-scoring box. Boxes with IoU &gt; threshold (e.g., 0.5) with a retained box are suppressed.</p>
+
+                        <h2>4. Bag of Visual Words</h2>
+                        <p>BoVW generalises the text retrieval concept to images. Steps:</p>
+                        <ol>
+                            <li><strong>Descriptor extraction:</strong> extract local descriptors (SIFT) at keypoints or on a dense grid across all training images.</li>
+                            <li><strong>Codebook construction:</strong> cluster all descriptors with k-Means into k visual words (the codebook).</li>
+                            <li><strong>Encoding:</strong> for a new image, assign each descriptor to its nearest visual word. Represent the image as a histogram of visual word frequencies (k-dimensional vector).</li>
+                            <li><strong>Classification:</strong> train an SVM (with χ² or histogram intersection kernel) on these k-dim histograms.</li>
+                        </ol>
+                        <p>BoVW loses all spatial information. Spatial Pyramid Matching (Lazebnik et al., 2006) recovers some by concatenating histograms computed at multiple spatial grid resolutions.</p>
+
+                        <h2>5. Evaluation for Detection</h2>
+                        <p><strong>Intersection over Union (IoU):</strong> measures overlap between predicted box B_p and ground-truth box B_gt:</p>
+                        <div class="math_block">
+                            IoU = Area(B_p ∩ B_gt) / Area(B_p ∪ B_gt)
+                        </div>
+                        <p>A detection is a True Positive if IoU &gt; threshold (commonly 0.5 for PASCAL VOC). By varying the classifier threshold we get a precision-recall curve. The <strong>Average Precision (AP)</strong> is the area under this curve. <strong>Mean AP (mAP)</strong> averages AP across all object categories.</p>
+
+                        <h2>6. Limitations and the Motivation for CNNs</h2>
+                        <p>Hand-crafted features have a fundamental limitation: the designer must anticipate which image properties are discriminative. HOG works for rigid upright objects but fails for deformable objects, unusual viewpoints, or images with strong illumination variation. The codebook in BoVW must be rebuilt for each new domain. There is no end-to-end optimisation — the features and classifier are trained separately, so errors in feature design cannot be recovered downstream.</p>
+
+                        <div class="note_box">
+                            <strong>Transition to Deep Learning</strong>
+                            The 2012 AlexNet result (top-5 error 15.3% vs. 26.2% for the best classical method on ImageNet) demonstrated that features learned directly from data via convolutional networks could dramatically outperform hand-crafted features. The next lectures explore how CNNs implement and automate this feature learning.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-mlrcv-ensemble.html">Ensemble Learning</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-mlrcv-intro-cnns.html">Introduction to CNNs</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">ML for Robotics &amp; CV</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-mlrcv-regression.html">01 — Regression</a></li>
+                                <li><a href="lec-mlrcv-classification.html">02 — Classification</a></li>
+                                <li><a href="lec-mlrcv-unsupervised.html">03 — Unsupervised Learning</a></li>
+                                <li><a href="lec-mlrcv-ensemble.html">04 — Ensemble Learning</a></li>
+                                <li class="active"><a href="lec-mlrcv-ml-cv-tasks.html">05 — ML for CV Tasks</a></li>
+                                <li><a href="lec-mlrcv-intro-cnns.html">06 — Introduction to CNNs</a></li>
+                                <li><a href="lec-mlrcv-learning-cnns.html">07 — Learning CNNs</a></li>
+                                <li><a href="lec-mlrcv-building-cnns.html">08 — Building CNNs</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">HOG Features</a></li>
+                                <li><a href="#">Sliding Window</a></li>
+                                <li><a href="#">Bag of Words</a></li>
+                                <li><a href="#">NMS</a></li>
+                                <li><a href="#">IoU</a></li>
+                                <li><a href="#">mAP</a></li>
+                                <li><a href="#">SIFT</a></li>
+                                <li><a href="#">Object Detection</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

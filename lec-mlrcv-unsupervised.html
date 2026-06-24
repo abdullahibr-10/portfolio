@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Unsupervised Learning — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">ML for Robotics &amp; Computer Vision</p>
+                    <h2>Unsupervised Learning</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-mlrcv-unsupervised.html">Unsupervised Learning</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">ML for Robotics &amp; Computer Vision · Lec 03</span>
+                        <h1>Unsupervised Learning</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Unsupervised learning discovers structure in unlabelled data — clusters, latent factors, compact representations. In robotics, it underpins codebook generation for visual place recognition, point cloud downsampling, and anomaly detection in sensor streams.</p>
+
+                        <h2>1. k-Means Clustering</h2>
+                        <p>k-Means partitions n data points into k clusters by alternating between two steps (Lloyd's algorithm):</p>
+                        <ol>
+                            <li><strong>Assignment:</strong> assign each point xᵢ to its nearest centroid: cᵢ = argminₖ ||xᵢ − μₖ||².</li>
+                            <li><strong>Update:</strong> recompute each centroid as the mean of its assigned points: μₖ = (1/|Cₖ|) Σᵢ∈Cₖ xᵢ.</li>
+                        </ol>
+                        <p>The algorithm monotonically decreases the within-cluster sum of squares J = Σᵢ ||xᵢ − μ_{cᵢ}||² and converges to a local minimum. Because it is sensitive to initialisation, <strong>k-Means++</strong> spreads initial centroids by sampling proportionally to squared distance from the nearest chosen centroid — this usually gives faster convergence and better local minima.</p>
+
+                        <h2>2. Choosing k</h2>
+                        <p>There is no single correct answer for k. Two practical methods:</p>
+                        <ul>
+                            <li><strong>Elbow method:</strong> plot J vs k. The "elbow" — a kink where the rate of decrease sharply slows — indicates a good k. Often subjective.</li>
+                            <li><strong>Silhouette score:</strong> for each point, s = (b − a) / max(a, b) where a = mean intra-cluster distance, b = mean nearest-cluster distance. s ∈ [−1, 1], higher is better. Average over all points gives a global score to compare different values of k.</li>
+                        </ul>
+
+                        <h2>3. Gaussian Mixture Models</h2>
+                        <p>GMMs model the data as a mixture of K Gaussians. Each cluster k has a mean μₖ, covariance Σₖ, and mixing weight πₖ (with Σπₖ = 1). The data likelihood is:</p>
+
+                        <div class="math_block">
+                            p(x) = Σₖ πₖ · N(x ; μₖ, Σₖ)
+                        </div>
+
+                        <p>GMMs are fitted with the <strong>Expectation-Maximisation (EM)</strong> algorithm:</p>
+                        <ul>
+                            <li><strong>E-step:</strong> compute soft responsibilities rᵢₖ = πₖ N(xᵢ; μₖ, Σₖ) / Σⱼ πⱼ N(xᵢ; μⱼ, Σⱼ). Each point is assigned to every cluster with a fractional weight.</li>
+                            <li><strong>M-step:</strong> update parameters using weighted statistics: μₖ = Σᵢ rᵢₖ xᵢ / Nₖ, Σₖ = Σᵢ rᵢₖ (xᵢ−μₖ)(xᵢ−μₖ)ᵀ / Nₖ, πₖ = Nₖ/n where Nₖ = Σᵢ rᵢₖ.</li>
+                        </ul>
+                        <p>EM monotonically increases the log-likelihood and converges to a local maximum. k-Means is a special case of GMM-EM where covariances are isotropic and equal, and E-step responsibilities are hard (0 or 1).</p>
+
+                        <h2>4. Principal Component Analysis</h2>
+                        <p>PCA finds a lower-dimensional linear subspace that maximises variance (equivalently, minimises reconstruction error). The algorithm:</p>
+                        <ol>
+                            <li>Mean-centre the data: x̃ᵢ = xᵢ − x̄.</li>
+                            <li>Compute the covariance matrix: C = (1/n) X̃ᵀX̃.</li>
+                            <li>Eigendecompose: C = VΛVᵀ. Columns of V are eigenvectors (principal components); Λ contains eigenvalues.</li>
+                            <li>Project onto the top d eigenvectors: z = Vᵈᵀx̃.</li>
+                        </ol>
+                        <p>The fraction of variance retained is Σᵢ₌₁ᵈ λᵢ / Σᵢ λᵢ. <strong>Whitening</strong> additionally scales each component by λᵢ⁻¹/², giving uncorrelated unit-variance features — useful as preprocessing for downstream classifiers.</p>
+
+                        <div class="note_box">
+                            <strong>Robotics Applications</strong>
+                            k-Means builds the visual codebook for Bag-of-Visual-Words (covered next lecture). PCA reduces high-dimensional LiDAR scan features to a compact descriptor. GMMs model multi-modal sensor noise in Bayesian filters. Anomaly detection (e.g., mechanical fault in a joint) fits a GMM to normal operation and flags low-likelihood samples as anomalies.
+                        </div>
+
+                        <p>Unsupervised methods are particularly valuable in robotics because labelled data is expensive to obtain — labelling point clouds or sensor logs requires expert annotation. Learning structure from raw data first, then fine-tuning with limited labels, is an increasingly common paradigm in modern robot perception.</p>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-mlrcv-classification.html">Classification</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-mlrcv-ensemble.html">Ensemble Learning</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">ML for Robotics &amp; CV</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-mlrcv-regression.html">01 — Regression</a></li>
+                                <li><a href="lec-mlrcv-classification.html">02 — Classification</a></li>
+                                <li class="active"><a href="lec-mlrcv-unsupervised.html">03 — Unsupervised Learning</a></li>
+                                <li><a href="lec-mlrcv-ensemble.html">04 — Ensemble Learning</a></li>
+                                <li><a href="lec-mlrcv-ml-cv-tasks.html">05 — ML for CV Tasks</a></li>
+                                <li><a href="lec-mlrcv-intro-cnns.html">06 — Introduction to CNNs</a></li>
+                                <li><a href="lec-mlrcv-learning-cnns.html">07 — Learning CNNs</a></li>
+                                <li><a href="lec-mlrcv-building-cnns.html">08 — Building CNNs</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">k-Means</a></li>
+                                <li><a href="#">GMM</a></li>
+                                <li><a href="#">EM Algorithm</a></li>
+                                <li><a href="#">PCA</a></li>
+                                <li><a href="#">Clustering</a></li>
+                                <li><a href="#">Dimensionality Reduction</a></li>
+                                <li><a href="#">Silhouette Score</a></li>
+                                <li><a href="#">Anomaly Detection</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

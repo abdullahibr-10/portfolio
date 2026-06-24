@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Fundamental &amp; Essential Matrix — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Graph SLAM</p>
+                    <h2>Fundamental &amp; Essential Matrix</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-slam-fundamental-essential.html">Fundamental &amp; Essential</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 03</span>
+                        <h1>Fundamental &amp; Essential Matrix</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>The fundamental matrix F encodes the geometric relationship between two camera views without requiring knowledge of the intrinsic parameters. It constrains where corresponding points can appear across images, enabling feature matching verification and relative pose recovery.</p>
+
+                        <h2>1. The Epipolar Constraint</h2>
+                        <p>Given a point x in image 1, its corresponding point x' in image 2 is not arbitrary — it must lie on a specific line l' called the <em>epipolar line</em>. The fundamental matrix F encodes this relationship: l' = Fx. The constraint that x' lies on l' gives the fundamental epipolar constraint:</p>
+
+                        <div class="math_block">
+                            x'ᵀ F x = 0
+                        </div>
+
+                        <p>This scalar equation must hold for every true correspondence (x, x'). It is a necessary (but not sufficient) condition for a point pair to be a correct match — it can be used to filter mismatches.</p>
+
+                        <h2>2. Properties of the Fundamental Matrix</h2>
+                        <p>F is a 3×3 matrix with the following properties:</p>
+                        <ul>
+                            <li><strong>Rank 2:</strong> det(F) = 0. This enforces that the epipolar lines in both images all pass through the respective epipoles.</li>
+                            <li><strong>7 DOF:</strong> 9 elements, minus 1 for scale (homogeneous), minus 1 for the rank-2 constraint = 7 degrees of freedom.</li>
+                            <li>F depends only on the relative pose between cameras and the intrinsic parameters — not on the 3D scene.</li>
+                        </ul>
+
+                        <h2>3. The 8-Point Algorithm</h2>
+                        <p>Given n ≥ 8 point correspondences, each pair (xᵢ, x'ᵢ) provides one linear equation in the 9 entries of F via x'ᵀFx = 0. Stack n constraints into Af = 0 where f = vec(F) and A is n×9.</p>
+                        <ol>
+                            <li>Solve Af = 0 via SVD: f is the last column of V in A = UΣVᵀ.</li>
+                            <li>Reshape f to 3×3 to get F̂.</li>
+                            <li>Enforce rank-2 constraint: compute SVD F̂ = UΣVᵀ, set the smallest singular value to 0, reconstruct: F = U diag(σ₁, σ₂, 0) Vᵀ.</li>
+                        </ol>
+                        <p>This gives the algebraically optimal F for the given correspondences (without normalisation — see next lecture for why normalisation is critical).</p>
+
+                        <h2>4. The Essential Matrix</h2>
+                        <p>For calibrated cameras (K known for both cameras), we work in normalised image coordinates x̄ = K⁻¹x. The essential matrix E is the fundamental matrix in these coordinates: E = KᵀFK'. It relates to the relative camera pose by E = [t]× R, where R is the relative rotation and [t]× is the skew-symmetric cross-product matrix of the translation vector t.</p>
+
+                        <p>Key properties of E:</p>
+                        <ul>
+                            <li><strong>5 DOF:</strong> 3 for rotation (SO(3)), 2 for translation direction (scale unknown in monocular vision) = 5 DOF.</li>
+                            <li>Singular values of E satisfy σ₁ = σ₂ &gt; 0, σ₃ = 0 (two equal non-zero singular values). This more rigid structure makes E more stable to estimate than F when K is known.</li>
+                        </ul>
+
+                        <h2>5. Recovering [R | t] from E</h2>
+                        <p>Given E = UΣVᵀ, there are four candidate decompositions into (R, t):</p>
+                        <ul>
+                            <li>R = U W Vᵀ or R = U Wᵀ Vᵀ (where W = [[0,-1,0],[1,0,0],[0,0,1]])</li>
+                            <li>t = ±u₃ (the third column of U)</li>
+                        </ul>
+                        <p>This yields 4 combinations. The correct solution is selected via the <strong>chirality check</strong>: triangulate a point from both cameras using each candidate (R, t) and select the solution where the reconstructed point lies in front of both cameras (positive depth in both camera frames). In practice, only one of the four solutions satisfies this.</p>
+
+                        <div class="note_box">
+                            <strong>F vs E in Practice</strong>
+                            Use E when cameras are calibrated (known K) — it has fewer DOF, is more constrained, and gives more accurate pose recovery. Use F when intrinsics are unknown or unreliable, but note that you cannot recover the metric pose from F alone, only the projective structure.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-slam-dlt.html">DLT</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-slam-fund-essential-direct.html">Fundamental &amp; Essential Direct</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li class="active"><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Fundamental Matrix</a></li>
+                                <li><a href="#">Essential Matrix</a></li>
+                                <li><a href="#">8-Point Algorithm</a></li>
+                                <li><a href="#">Epipolar Constraint</a></li>
+                                <li><a href="#">Relative Pose</a></li>
+                                <li><a href="#">Chirality Check</a></li>
+                                <li><a href="#">SVD</a></li>
+                                <li><a href="#">Stereo Geometry</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

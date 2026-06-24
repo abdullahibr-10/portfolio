@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Features: Descriptors — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Graph SLAM</p>
+                    <h2>Features — Descriptors</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-slam-features-descriptors.html">Features: Descriptors</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 10</span>
+                        <h1>Features — Descriptors</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Nov 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>A descriptor is a compact, distinctive representation of the local image patch around a keypoint. Good descriptors are invariant to the nuisances that change appearance across views (illumination, rotation, scale) while remaining discriminative enough to distinguish different scene points.</p>
+
+                        <h2>1. The Descriptor Goal</h2>
+                        <p>Given a keypoint at location (x, y) with scale σ and orientation θ, extract a canonical patch (normalised for scale and rotation), and encode its appearance as a fixed-length vector. Two descriptors from the same scene point should be close in descriptor space; descriptors from different points should be far apart. The challenge: images of the same scene point can differ significantly due to lighting, viewpoint angle, and partial occlusion.</p>
+
+                        <h2>2. SIFT Descriptor</h2>
+                        <p>The SIFT descriptor (Lowe, 2004) is the gold standard for accuracy:</p>
+                        <ol>
+                            <li>Extract a 16×16 pixel patch around the keypoint, scaled to the characteristic scale σ* and rotated to the dominant orientation.</li>
+                            <li>Divide into a 4×4 grid of cells (each 4×4 pixels).</li>
+                            <li>In each cell, compute an 8-bin histogram of gradient orientations, weighted by gradient magnitude and a Gaussian centered on the keypoint.</li>
+                            <li>Concatenate the 4×4×8 = 128 values into a vector.</li>
+                            <li>L2-normalise. Clamp values above 0.2 (reduces sensitivity to non-linear illumination changes). Renormalise.</li>
+                        </ol>
+                        <p>Result: a 128-dimensional float vector. Matching with Euclidean distance in 128D gives extremely reliable correspondences at the cost of storage and matching speed.</p>
+
+                        <h2>3. Dominant Orientation for Rotation Invariance</h2>
+                        <p>Before computing the SIFT descriptor, find the dominant gradient orientation in the keypoint neighbourhood. Compute a 36-bin histogram of gradient orientations (weighted by magnitude and a Gaussian) in a window of radius 3σ* around the keypoint. The peak of this histogram is the dominant orientation. The patch is then rotated by this angle before description, making the descriptor rotation-invariant.</p>
+
+                        <h2>4. BRIEF Descriptor</h2>
+                        <p>BRIEF (Binary Robust Independent Elementary Features) trades accuracy for extreme compactness and speed. Pre-define 256 pairs of pixel locations (p_k, q_k) within the patch (sampled from a Gaussian distribution). The descriptor is a 256-bit binary string where bit k = 1 if I(p_k) &gt; I(q_k). Matching is done with Hamming distance (XOR + popcount), which is a single CPU instruction on modern hardware. BRIEF alone is not rotation-invariant.</p>
+
+                        <h2>5. ORB — Oriented FAST + Rotated BRIEF</h2>
+                        <p>ORB (Rublee et al., 2011) is the standard descriptor for real-time SLAM:</p>
+                        <ul>
+                            <li><strong>Detection:</strong> FAST keypoints with Harris scoring to select the best N.</li>
+                            <li><strong>Orientation:</strong> intensity centroid method — the vector from the patch centroid to its intensity-weighted centroid defines the orientation.</li>
+                            <li><strong>Description:</strong> BRIEF applied to the rotation-corrected patch, using a pre-learned set of point pairs that are both discriminative and uncorrelated.</li>
+                        </ul>
+                        <p>ORB is 2 orders of magnitude faster than SIFT with only modest accuracy loss. It powers ORB-SLAM2/3, the most widely used real-time visual SLAM system.</p>
+
+                        <h2>6. Descriptor Matching and Lowe's Ratio Test</h2>
+                        <p>Brute-force matching compares each descriptor in image 1 against all descriptors in image 2 (O(N²) comparisons). For SIFT, use FLANN (approximate nearest neighbours). For binary descriptors (ORB/BRIEF), use linear scan with XOR+popcount — even a database of 10k binary descriptors can be searched in microseconds.</p>
+                        <p><strong>Lowe's ratio test</strong> filters ambiguous matches: compute the two nearest neighbours d₁ ≤ d₂. Accept the match only if d₁/d₂ &lt; 0.8. If the best match is only marginally better than the second-best, the keypoint is in an ambiguous region (repeated texture, homogeneous area) and the match is rejected. This test alone eliminates the majority of false matches.</p>
+
+                        <div class="note_box">
+                            <strong>Float vs Binary Descriptors</strong>
+                            Float descriptors (SIFT, 128×4 = 512 bytes per keypoint) provide higher accuracy for wide-baseline matching and complex lighting changes. Binary descriptors (ORB, 256 bits = 32 bytes) are 16× more compact and match orders of magnitude faster — ideal for real-time SLAM but may struggle with large viewpoint changes (&gt;60°).
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-slam-features-keypoints.html">Features: Keypoints</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-slam-icp-known-da.html">ICP — Known DA</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li class="active"><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">SIFT Descriptor</a></li>
+                                <li><a href="#">ORB</a></li>
+                                <li><a href="#">BRIEF</a></li>
+                                <li><a href="#">Ratio Test</a></li>
+                                <li><a href="#">Feature Matching</a></li>
+                                <li><a href="#">Hamming Distance</a></li>
+                                <li><a href="#">Binary Descriptors</a></li>
+                                <li><a href="#">Visual SLAM</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

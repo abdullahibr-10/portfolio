@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Regression — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">ML for Robotics &amp; Computer Vision</p>
+                    <h2>Regression</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-mlrcv-regression.html">Regression</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">ML for Robotics &amp; Computer Vision · Lec 01</span>
+                        <h1>Regression</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Regression is the foundational supervised learning task: given labelled training pairs (x, y), learn a mapping that generalises to unseen inputs. In robotics, regression appears everywhere — estimating continuous joint torques, predicting depth from image pixels, or fitting sensor calibration curves.</p>
+
+                        <h2>1. Supervised Learning Setup</h2>
+                        <p>We have a training set of m examples {(x⁽ⁱ⁾, y⁽ⁱ⁾)} where x ∈ ℝⁿ is the feature vector and y ∈ ℝ is the continuous target. Our goal is to learn a hypothesis h_θ(x) parameterised by θ such that h_θ(x) ≈ y for new inputs. The quality of this approximation is measured by a loss function, typically chosen to reflect the task's error sensitivity.</p>
+
+                        <h2>2. Linear Regression</h2>
+                        <p>The simplest hypothesis is a linear function h_θ(x) = θᵀx (with a bias term absorbed via an augmented feature x₀ = 1). The standard cost function is the mean squared error:</p>
+
+                        <div class="math_block">
+                            J(θ) = (1/2m) Σᵢ (h_θ(x⁽ⁱ⁾) − y⁽ⁱ⁾)²
+                        </div>
+
+                        <p>For linear regression the minimiser of J(θ) has a closed-form solution called the <strong>Normal Equation</strong>:</p>
+
+                        <div class="math_block">
+                            θ = (XᵀX)⁻¹ Xᵀy
+                        </div>
+
+                        <p>where X is the m×(n+1) design matrix. This is exact but costs O(n³) to invert — impractical when n is large (e.g., raw pixel features). In those cases, iterative optimisation is preferred.</p>
+
+                        <h2>3. Gradient Descent</h2>
+                        <p>Gradient descent minimises J(θ) iteratively. Starting from an initial θ, repeatedly apply the update rule:</p>
+
+                        <div class="math_block">
+                            θⱼ ← θⱼ − α · (∂J/∂θⱼ) = θⱼ − (α/m) Σᵢ (h_θ(x⁽ⁱ⁾) − y⁽ⁱ⁾) xⱼ⁽ⁱ⁾
+                        </div>
+
+                        <p>The learning rate α controls step size. Too large: overshoots and diverges. Too small: very slow convergence. <strong>Stochastic gradient descent (SGD)</strong> updates using one sample at a time; <strong>mini-batch</strong> uses a small batch (32–256) — a compromise between noise and computation. Convergence is guaranteed for convex J (such as MSE with linear h_θ).</p>
+
+                        <h2>4. Polynomial Regression</h2>
+                        <p>To capture non-linear relationships, we augment features with polynomial terms: for a scalar input x, form φ(x) = [1, x, x², …, xᵈ]ᵀ and apply linear regression in this higher-dimensional feature space. The hypothesis h_θ(φ(x)) can fit complex curves while remaining linear in θ. However, high-degree polynomials (d ≫ 1) will fit training noise — a phenomenon called <strong>overfitting</strong> — and generalise poorly.</p>
+
+                        <h2>5. Regularisation</h2>
+                        <p>Regularisation adds a penalty on the magnitude of θ to discourage overfitting:</p>
+                        <ul>
+                            <li><strong>Ridge (L2):</strong> J_ridge(θ) = J(θ) + λ Σⱼ θⱼ². This shrinks all weights towards zero smoothly. The normal equation becomes θ = (XᵀX + λI)⁻¹Xᵀy, which also fixes the rank-deficiency of XᵀX.</li>
+                            <li><strong>Lasso (L1):</strong> J_lasso(θ) = J(θ) + λ Σⱼ |θⱼ|. The non-differentiable penalty at zero produces <em>sparse</em> solutions — many θⱼ are driven to exactly zero, performing automatic feature selection.</li>
+                        </ul>
+                        <p>The regularisation strength λ is a hyperparameter: large λ increases bias, small λ allows overfitting. It is selected by cross-validation.</p>
+
+                        <h2>6. Cross-Validation</h2>
+                        <p>In k-fold cross-validation, the training set is split into k equal folds. For each fold i, the model trains on the remaining k−1 folds and is evaluated on fold i. The average validation error across all folds estimates generalisation performance. We sweep over candidate hyperparameters (λ, polynomial degree) and select the configuration with the lowest cross-validated error. k = 5 or 10 is typical.</p>
+
+                        <h2>7. Bias-Variance Tradeoff</h2>
+                        <p>The expected test error decomposes as: Bias² + Variance + Irreducible Noise. A too-simple model (low d, high λ) has <strong>high bias</strong> — it systematically underfits the data, producing large training and test error. A too-complex model (high d, low λ) has <strong>high variance</strong> — it fits training noise and performs much worse on test data than on training data. Optimal model complexity minimises the total error, balancing these two sources.</p>
+
+                        <div class="note_box">
+                            <strong>Key Takeaway</strong>
+                            Regularisation and cross-validation are inseparable: always tune λ on a held-out validation set, never on the test set. Reporting test error on the same data used for hyperparameter selection produces overly optimistic estimates.
+                        </div>
+
+                        <p>Regression provides the scaffolding for more advanced ML: logistic regression adapts this framework for classification by passing h_θ(x) through a sigmoid, and neural network output layers often use the same MSE or cross-entropy cost functions.</p>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="blog.html">Back to All Notes</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-mlrcv-classification.html">Classification</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">ML for Robotics &amp; CV</h4>
+                            <ul class="course_contents_list">
+                                <li class="active"><a href="lec-mlrcv-regression.html">01 — Regression</a></li>
+                                <li><a href="lec-mlrcv-classification.html">02 — Classification</a></li>
+                                <li><a href="lec-mlrcv-unsupervised.html">03 — Unsupervised Learning</a></li>
+                                <li><a href="lec-mlrcv-ensemble.html">04 — Ensemble Learning</a></li>
+                                <li><a href="lec-mlrcv-ml-cv-tasks.html">05 — ML for CV Tasks</a></li>
+                                <li><a href="lec-mlrcv-intro-cnns.html">06 — Introduction to CNNs</a></li>
+                                <li><a href="lec-mlrcv-learning-cnns.html">07 — Learning CNNs</a></li>
+                                <li><a href="lec-mlrcv-building-cnns.html">08 — Building CNNs</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Linear Regression</a></li>
+                                <li><a href="#">Gradient Descent</a></li>
+                                <li><a href="#">Regularisation</a></li>
+                                <li><a href="#">Ridge / Lasso</a></li>
+                                <li><a href="#">Cross-Validation</a></li>
+                                <li><a href="#">Bias-Variance</a></li>
+                                <li><a href="#">Overfitting</a></li>
+                                <li><a href="#">Supervised Learning</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

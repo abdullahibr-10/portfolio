@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Camera Parameters — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Graph SLAM</p>
+                    <h2>Camera Parameters</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-slam-camera-params.html">Camera Parameters</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 01</span>
+                        <h1>Camera Parameters</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>A camera transforms a 3D scene into a 2D image. To use cameras for SLAM, reconstruction, or manipulation, we need a precise mathematical model of this transformation. This lecture establishes the pinhole camera model and the calibration parameters that characterise a real lens.</p>
+
+                        <h2>1. The Pinhole Camera Model</h2>
+                        <p>The idealised pinhole camera models image formation as a perspective projection through a single point (the optical centre). A 3D point P = [X, Y, Z]ᵀ in camera coordinates projects to image coordinates [u, v]ᵀ according to:</p>
+
+                        <div class="math_block">
+                            u = f_x · (X/Z) + c_x,  &nbsp; v = f_y · (Y/Z) + c_y
+                        </div>
+
+                        <p>Here f_x and f_y are the focal lengths in pixels (they differ if pixels are not square), and (c_x, c_y) is the principal point — ideally the image centre, but typically slightly off due to manufacturing tolerances.</p>
+
+                        <h2>2. The Intrinsic Matrix K</h2>
+                        <p>These parameters are compactly represented by the 3×3 intrinsic matrix K:</p>
+
+                        <div class="math_block">
+                            K = [[f_x,  s,  c_x], [0,  f_y,  c_y], [0,  0,  1]]
+                        </div>
+
+                        <p>The skew parameter s accounts for non-rectangular pixels (usually s ≈ 0 in practice). In homogeneous coordinates, the projection becomes λp̃ = K · [I|0] · P̃, where λ is the projective depth and tildes denote homogeneous vectors. K has 5 degrees of freedom: f_x, f_y, c_x, c_y, s.</p>
+
+                        <h2>3. Extrinsic Parameters [R | t]</h2>
+                        <p>The camera rarely sits at the world origin. The extrinsic matrix [R | t] defines the rigid body transform from world coordinates to camera coordinates. R is a 3×3 rotation matrix (SO(3)) and t ∈ ℝ³ is the translation. The full projection equation is:</p>
+
+                        <div class="math_block">
+                            λ p̃ = K [R | t] P̃_world
+                        </div>
+
+                        <p>Together, K, R, and t form the 3×4 camera projection matrix P = K[R|t]. Given P, we can predict the image location of any 3D world point.</p>
+
+                        <h2>4. Lens Distortion</h2>
+                        <p>Real lenses deviate from the ideal pinhole model. The two dominant distortion types are:</p>
+                        <ul>
+                            <li><strong>Radial distortion:</strong> causes straight lines to appear curved (barrel or pincushion). Modelled as: x_d = x(1 + k₁r² + k₂r⁴ + k₃r⁶) where r² = x² + y² and (x, y) are normalised image coordinates.</li>
+                            <li><strong>Tangential distortion:</strong> arises from imperfect lens-sensor alignment. Coefficients p₁, p₂ with: Δx = 2p₁xy + p₂(r²+2x²), Δy = p₁(r²+2y²) + 2p₂xy.</li>
+                        </ul>
+                        <p>Distortion must be corrected before computing geometry (fundamental matrix, triangulation) as those algorithms assume pinhole projection. OpenCV's <code>undistort()</code> function handles this.</p>
+
+                        <h2>5. Camera Calibration — Zhang's Method</h2>
+                        <p>Zhang's method (1999) is the standard calibration procedure. A planar checkerboard pattern with known geometry is photographed from N ≥ 3 different orientations:</p>
+                        <ol>
+                            <li>Detect checkerboard corners (sub-pixel accuracy with iterative refinement).</li>
+                            <li>For each view, compute a homography H mapping the board plane to the image (the board is a planar scene — see next lecture).</li>
+                            <li>Each H provides two linear constraints on K. With N views, stack into a linear system and solve for K.</li>
+                            <li>Compute [R|t] for each view from K⁻¹H.</li>
+                            <li>Refine all parameters (K, distortion, all extrinsics) together with non-linear least squares (Levenberg-Marquardt) minimising reprojection error.</li>
+                        </ol>
+
+                        <div class="note_box">
+                            <strong>Focal Length: mm vs Pixels</strong>
+                            The physical focal length f_mm (millimetres) relates to the pixel focal length by f_x = f_mm / pixel_width_mm. For a sensor with 4µm pixels, f_mm = 4mm → f_x = 1000px. This conversion matters when comparing camera specs across different sensors.
+                        </div>
+
+                        <p>Calibration accuracy directly affects all downstream geometry: a poorly calibrated camera gives poor triangulation, poor pose estimation, and poor depth accuracy. Always validate calibration by checking the mean reprojection error — below 0.5 pixels is good for most applications.</p>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="blog.html">Back to All Notes</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-slam-dlt.html">DLT</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li class="active"><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Camera Calibration</a></li>
+                                <li><a href="#">Intrinsic Matrix</a></li>
+                                <li><a href="#">Lens Distortion</a></li>
+                                <li><a href="#">Projection</a></li>
+                                <li><a href="#">Zhang's Method</a></li>
+                                <li><a href="#">Homogeneous Coords</a></li>
+                                <li><a href="#">Reprojection Error</a></li>
+                                <li><a href="#">Stereo Vision</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

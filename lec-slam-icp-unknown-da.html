@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>ICP — Unknown Data Association — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Graph SLAM</p>
+                    <h2>ICP — Unknown Data Association</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-slam-icp-unknown-da.html">ICP — Unknown DA</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 12</span>
+                        <h1>ICP — Unknown Data Association</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Nov 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>The full ICP algorithm deals with the real-world case: two point clouds of the same scene with no known correspondences. It alternates between finding the nearest-neighbour correspondences (data association) and computing the optimal rigid transform (alignment), repeating until convergence.</p>
+
+                        <h2>1. Full ICP Algorithm</h2>
+                        <p>Given source P and target Q with unknown correspondences, and an initial estimate (R₀, t₀):</p>
+
+                        <pre><code>Initialise: T = (R₀, t₀)
+
+Repeat until convergence:
+  1. DATA ASSOCIATION:
+     For each pᵢ in P:
+       q_i = argmin_{q ∈ Q} || q − (R pᵢ + t) ||
+     (nearest neighbour search, e.g., k-d tree)
+
+  2. ALIGNMENT:
+     Solve SVD alignment (Lec 11) with correspondences
+     {(pᵢ, qᵢ)} to get new (R*, t*)
+
+  3. UPDATE: T ← (R*, t*) · T
+
+Until: ||E_current − E_previous|| < threshold</code></pre>
+
+                        <h2>2. Convergence Properties</h2>
+                        <p>ICP <em>monotonically decreases</em> the objective function at each iteration — the nearest-neighbour assignment can only decrease or maintain the cost, and the SVD alignment minimises cost for fixed correspondences. Therefore ICP always converges. However, it converges to a <strong>local minimum</strong>, which may not be the global minimum (correct alignment). The final result depends critically on initialisation.</p>
+
+                        <h2>3. Initialisation Sensitivity</h2>
+                        <p>ICP requires a reasonable initial alignment — typically within the "basin of attraction" of the correct solution. Common initialisation strategies:</p>
+                        <ul>
+                            <li><strong>Coarse-to-fine:</strong> subsample both point clouds to low resolution, run ICP, then use the result as initialisation for the full-resolution ICP.</li>
+                            <li><strong>Feature-based:</strong> extract FPFH (Fast Point Feature Histograms) descriptors at keypoints, match, compute initial transform via RANSAC + SVD. This global registration does not require a good initial guess.</li>
+                            <li><strong>4PCS (Four-Point Congruent Sets):</strong> finds a congruent set of 4 coplanar points in both scans — a global registration method for no-initial-guess scenarios.</li>
+                        </ul>
+
+                        <h2>4. Robust ICP</h2>
+                        <p>Standard nearest-neighbour correspondences are sensitive to outliers — a noisy point or a scan from a partially overlapping region will corrupt correspondences. Solutions:</p>
+                        <ul>
+                            <li><strong>Distance threshold:</strong> reject pairs where ||qᵢ − Rpᵢ − t|| &gt; d_max. Discards points with no nearby match in the target (likely in non-overlapping regions).</li>
+                            <li><strong>Trimmed ICP:</strong> only use the closest s% of pairs (e.g., s = 80%). Automatically adapts to partial overlap without a fixed threshold.</li>
+                            <li><strong>Robust kernels:</strong> replace squared distance with Huber or Cauchy loss — large residuals (outliers) are down-weighted instead of discarded.</li>
+                        </ul>
+
+                        <h2>5. EM Interpretation</h2>
+                        <p>ICP can be viewed as EM for a mixture model where each source point is a Gaussian centred on its nearest target neighbour. The E-step (nearest-neighbour) performs hard assignment (one Gaussian gets all the probability for each source point). The M-step (SVD alignment) maximises the likelihood given those assignments. <strong>Soft-assign ICP (EM-ICP)</strong> replaces hard assignment with soft Gaussian weights, giving smoother convergence behaviour and better handling of ambiguous nearest neighbours.</p>
+
+                        <h2>6. Generalised ICP (GICP)</h2>
+                        <p>GICP (Segal et al., 2009) models each point as a Gaussian distribution with local covariance Cᵢ estimated from its neighbourhood. This captures the local surface geometry: points on a flat plane have a thin, disc-shaped covariance; points on a sharp edge have a thin, rod-shaped covariance. The alignment minimises the Mahalanobis distance between corresponding Gaussians, effectively implementing plane-to-plane registration. GICP achieves better accuracy and faster convergence than standard point-to-point or point-to-plane ICP, and is the state-of-the-art for LiDAR scan matching.</p>
+
+                        <div class="note_box">
+                            <strong>ICP in ROS</strong>
+                            In ROS2, point cloud registration can be done with the PCL library's <code>pcl::IterativeClosestPoint</code> (point-to-point), <code>pcl::IterativeClosestPointWithNormals</code> (point-to-plane), or the <code>ndt_scan_matcher</code> package (NDT — Normal Distribution Transform, an alternative to ICP). For GICP, use <code>fast_gicp</code> or <code>hdl_graph_slam</code>.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-slam-icp-known-da.html">ICP — Known DA</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Back to Notes</span>
+                                <a href="blog.html">All Notes</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li class="active"><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">ICP</a></li>
+                                <li><a href="#">GICP</a></li>
+                                <li><a href="#">Nearest Neighbour</a></li>
+                                <li><a href="#">4PCS</a></li>
+                                <li><a href="#">Trimmed ICP</a></li>
+                                <li><a href="#">EM Algorithm</a></li>
+                                <li><a href="#">Point Cloud</a></li>
+                                <li><a href="#">LiDAR SLAM</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

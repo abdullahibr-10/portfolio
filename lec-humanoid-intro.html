@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Introduction &amp; Perception Basics — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Humanoid Robotics</p>
+                    <h2>Introduction &amp; Perception Basics</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-humanoid-intro.html">Intro &amp; Perception</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Humanoid Robotics · Lec 01</span>
+                        <h1>Introduction &amp; Perception Basics</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Humanoid robotics combines bipedal locomotion, dexterous manipulation, and rich perception in a human-form platform. The Humanoid Robotics Lab at UniBonn provides hands-on access to the Unitree G1 robot — one of the most capable commercially available humanoids at the time of writing. This first lecture establishes the context, morphology, and core perception requirements.</p>
+
+                        <h2>1. A Brief History</h2>
+                        <p>Humanoid robotics has a 50-year history. Key milestones:</p>
+                        <ul>
+                            <li><strong>WABOT-1 (1973, Waseda University):</strong> the first full-scale anthropomorphic robot. Could walk (very slowly) and manipulate objects with tactile feedback. Demonstrated feasibility of bipedal walking machines.</li>
+                            <li><strong>Honda P2/P3 → ASIMO (1996–2011):</strong> Honda's decade-long program produced increasingly capable robots, culminating in ASIMO — stable bipedal walking, stair climbing, running at 6 km/h, and basic task completion. Demonstrated that robust dynamic walking in humans-sized robots was achievable.</li>
+                            <li><strong>Boston Dynamics Atlas (2013–present):</strong> demonstrated aggressive dynamic mobility — jumping, backflips, parkour. Shifted the field toward dynamic whole-body motion rather than quasi-static stability.</li>
+                            <li><strong>Unitree G1 (2024–present):</strong> affordable, open-SDK, highly capable. The platform used in the Humanoid Robotics lab. ~23 DOF in legs and torso plus optional dexterous hands.</li>
+                        </ul>
+
+                        <h2>2. Why Humanoid?</h2>
+                        <p>The compelling motivation for humanoid morphology is environmental compatibility:</p>
+                        <ul>
+                            <li>Human tools, furniture, vehicles, and workspaces are designed around the human body — a humanoid robot can use them without modification.</li>
+                            <li>Bipedal locomotion traverses the same environments humans can: stairs, doorways, narrow corridors, rough terrain.</li>
+                            <li>Two arms and hands allow simultaneous bimanual manipulation of objects too heavy or awkward for one hand.</li>
+                            <li>Social interaction benefits from human-like appearance and motion.</li>
+                        </ul>
+
+                        <h2>3. Morphology and Degrees of Freedom</h2>
+                        <p>A typical humanoid has 30+ degrees of freedom arranged as a <strong>floating-base kinematic chain</strong> — unlike industrial manipulators fixed to a base, the humanoid's root (pelvis) is free to move in 6 DOF. The Unitree G1 has approximately:</p>
+                        <ul>
+                            <li>6 DOF per leg (hip: 3, knee: 1, ankle: 2) × 2 = 12 DOF</li>
+                            <li>7 DOF per arm (shoulder: 3, elbow: 1, wrist: 3) × 2 = 14 DOF</li>
+                            <li>3 DOF neck/head, 1 DOF waist</li>
+                        </ul>
+                        <p>This redundancy (more DOF than needed for any single task) is exploited for simultaneous locomotion, manipulation, and balance.</p>
+
+                        <h2>4. Stability and ZMP</h2>
+                        <p><strong>Static stability:</strong> the centre of mass (CoM) projects vertically inside the support polygon (convex hull of foot contacts). Achievable while standing still but overly restrictive for walking.</p>
+                        <p><strong>Zero Moment Point (ZMP):</strong> the point on the ground where the net moment of all contact forces is zero. For a robot in contact with the ground, if the ZMP remains inside the support polygon, the robot will not tip over (the ground can exert the necessary reaction forces). Walking is feasible as long as ZMP stays inside the convex hull of current foot contacts. The ZMP is measured via force/torque sensors in the feet.</p>
+
+                        <h2>5. Control Hierarchy</h2>
+                        <p>Humanoid control is typically organised in three layers:</p>
+                        <ul>
+                            <li><strong>Task level:</strong> high-level goals — "pick up the bottle", "walk to the door." Outputs desired end-effector trajectories or contact sequences.</li>
+                            <li><strong>Trajectory level:</strong> converts task-level goals into joint trajectories satisfying kinematic and dynamic constraints. Whole-body control (WBC) coordinates all DOF simultaneously.</li>
+                            <li><strong>Control level:</strong> joint-level torque/position control to track the trajectory. Typically runs at 1 kHz or higher on dedicated hardware.</li>
+                        </ul>
+
+                        <h2>6. Perception Stack</h2>
+                        <p>Humanoid perception must serve both locomotion and manipulation:</p>
+                        <ul>
+                            <li><strong>RGB-D cameras</strong> (Intel RealSense, ZED) at head height for workspace sensing and object detection.</li>
+                            <li><strong>LiDAR</strong> for environment mapping and obstacle avoidance during locomotion.</li>
+                            <li><strong>IMU</strong> (Inertial Measurement Unit) in the pelvis for body orientation — critical for balance control.</li>
+                            <li><strong>Force/torque sensors</strong> in feet (ZMP estimation) and wrists (grasp force control, manipulation contact detection).</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>Lab Platform</strong>
+                            The UniBonn Humanoid Robotics Lab uses the Unitree G1. Its SDK provides Python and C++ interfaces to joint-level control, IMU data, and camera streams. ROS2 integration enables integration with existing perception and planning packages. Practical sessions begin in week 3.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="blog.html">Back to All Notes</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-humanoid-3d-world.html">3D World Representations</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Humanoid Robotics</h4>
+                            <ul class="course_contents_list">
+                                <li class="active"><a href="lec-humanoid-intro.html">01 — Intro &amp; Perception Basics</a></li>
+                                <li><a href="lec-humanoid-3d-world.html">02 — 3D World Representations</a></li>
+                                <li><a href="lec-humanoid-active-perception.html">03 — Active Perception</a></li>
+                                <li><a href="lec-humanoid-manipulation-fundamentals.html">04 — Fundamentals of Manipulation</a></li>
+                                <li><a href="lec-humanoid-motion-planning.html">05 — Motion Planning for Manipulation</a></li>
+                                <li><a href="lec-humanoid-trajectory.html">06 — Trajectory Generation &amp; Optimization</a></li>
+                                <li><a href="lec-humanoid-grasping.html">07 — Grasping &amp; Pushing</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Humanoid Robots</a></li>
+                                <li><a href="#">ZMP</a></li>
+                                <li><a href="#">Bipedal Walking</a></li>
+                                <li><a href="#">Unitree G1</a></li>
+                                <li><a href="#">Whole-Body Control</a></li>
+                                <li><a href="#">RGB-D</a></li>
+                                <li><a href="#">Force/Torque</a></li>
+                                <li><a href="#">Kinematics</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

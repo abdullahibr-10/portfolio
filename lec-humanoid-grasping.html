@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Grasping &amp; Pushing — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Humanoid Robotics</p>
+                    <h2>Grasping &amp; Pushing</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-humanoid-grasping.html">Grasping &amp; Pushing</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Humanoid Robotics · Lec 07</span>
+                        <h1>Grasping &amp; Pushing</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Dec 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>This final lecture brings together the geometric theory (Lec 04) and motion planning (Lec 05) to address practical grasp synthesis and non-prehensile manipulation — pre-grasp pushing and sliding to reorient objects into graspable poses. Both are essential for a humanoid operating in an unstructured environment where objects are not always presented in the ideal orientation.</p>
+
+                        <h2>1. Grasp Synthesis Approaches</h2>
+                        <p>Three main paradigms for generating grasps from object geometry:</p>
+                        <ul>
+                            <li><strong>Analytical:</strong> formulate force-closure as a constrained optimisation over contact point locations on the object surface. Maximise the ε-metric or v-metric (Lec 04). Requires a known object model and is exact but slow. Tools: GraspIt! (open-source simulator for grasp analysis).</li>
+                            <li><strong>Sampling-based:</strong> randomly sample contact points or hand configurations, check force closure, keep the best. GraspIt!'s simulated annealing planner uses this. Fast for simple objects, struggles with complex shapes and tight tolerances.</li>
+                            <li><strong>Data-driven:</strong> learn grasp quality from large datasets. GraspNet-1Billion (Fang et al., 2020) provides 97K+ object models with 1B+ grasp annotations — trains a network to predict grasp quality directly from point clouds. 6-DOF GraspNet predicts full 6-DOF grasp poses from RGB-D input without known object models.</li>
+                        </ul>
+
+                        <h2>2. Antipodal Grasps</h2>
+                        <p>The simplest and most widely used 2-finger grasp is the <strong>antipodal grasp</strong>: two contact points with friction cones that overlap at or near the object's centre of mass (CoM) projection. Geometrically, a grasp is antipodal if the normals at the two contact points point roughly towards each other (within the friction cone angle). For objects with known 3D models, candidate antipodal grasps can be found by sampling pairs of points with opposing normals that satisfy the force-closure condition.</p>
+
+                        <p>Antipodal grasps are analytically simple and well-understood, but in practice the detected pose of the object has uncertainty, the approach trajectory may collide, and the robot's hand geometry may not allow reaching the contact points — all must be checked.</p>
+
+                        <h2>3. Pre-Grasp Manipulation</h2>
+                        <p>When an object's current pose does not afford a feasible grasp, the robot must manipulate the object <em>before</em> grasping it. Common pre-grasp operations:</p>
+                        <ul>
+                            <li><strong>Sliding:</strong> push the object along the surface to a new position (easier to reach, clear of clutter).</li>
+                            <li><strong>Tipping:</strong> tilt the object to expose a graspable face (e.g., a lying-flat book).</li>
+                            <li><strong>Toppling:</strong> push the object past its tipping point so it falls onto a stable face.</li>
+                            <li><strong>Pushing to a fence:</strong> push the object against a wall or edge to constrain its pose (reduces pose uncertainty before grasping).</li>
+                        </ul>
+
+                        <h2>4. Push Mechanics — Quasistatic Model</h2>
+                        <p>In the quasistatic regime (slow motions, inertia neglected), a planar object supported by friction on a table and pushed by a point contact follows simple mechanics. The object rotates about its <strong>Instantaneous Centre of Rotation (ICR)</strong> — a point whose location depends on the push contact point, the support friction distribution, and the object's mass distribution.</p>
+                        <p>For uniform pressure distribution and a uniform mass distribution, the ICR can be computed analytically from the limit surface of the support friction (an ellipse in wrench space). A key practical result: for a symmetric object pushed through its centre of mass, the object translates without rotating.</p>
+
+                        <h2>5. The Stable Push Theorem</h2>
+                        <p>Mason (1986) proved the stable push theorem: for a point pusher and uniform Coulomb friction between the object and support surface, the object eventually rotates until the contact normal passes through the centre of mass. This means that pushing an object along a straight line will cause it to rotate to a stable orientation where the contact force is aligned with the CoM. This property is exploited in <strong>fence pushing</strong>: slide the object into a corner, and it will orient itself predictably.</p>
+
+                        <h2>6. Learning to Grasp</h2>
+                        <p>Modern approaches use CNNs trained on real or simulated data:</p>
+                        <ul>
+                            <li><strong>Grasp Quality CNN (GQ-CNN):</strong> input is a depth image patch centred on a candidate grasp; output is the probability of grasp success. Trained on the Dex-Net dataset. Used in a pipeline: propose grasps, rank by GQ-CNN score, execute the best.</li>
+                            <li><strong>End-to-end grasp prediction:</strong> predict grasp pose directly from RGB-D — GraspNet-1Billion architecture takes a point cloud and predicts 6-DOF grasp poses with quality scores.</li>
+                            <li><strong>Sim-to-real transfer:</strong> training in simulation avoids the cost of real-world grasp annotation. Domain randomisation (random textures, lighting, object positions) and physics randomisation (mass, friction) bridge the sim-to-real gap.</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>G1 Hand Configuration</strong>
+                            The Unitree G1's dexterous hand (if equipped) has multi-DOF fingers. Practical grasp planning on the G1 must account for: (1) the hand's reachable joint configurations, (2) self-collision between fingers, and (3) the grasp planner included in Unitree's SDK. For the lab exercises, a parallel-jaw gripper abstraction is used — specify grasp pose (6-DOF) and width; the SDK handles finger control. Force feedback from joint torque sensing detects contact and grasp success.
+                        </div>
+
+                        <p>Grasping and pushing represent the bridge between perception (knowing where the object is) and task execution (picking it up and using it). Mastering these fundamentals opens up the full range of manipulation tasks that make humanoid robots genuinely useful in human environments.</p>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-humanoid-trajectory.html">Trajectory Generation &amp; Optimization</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Back to Notes</span>
+                                <a href="blog.html">All Notes</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Humanoid Robotics</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-humanoid-intro.html">01 — Intro &amp; Perception Basics</a></li>
+                                <li><a href="lec-humanoid-3d-world.html">02 — 3D World Representations</a></li>
+                                <li><a href="lec-humanoid-active-perception.html">03 — Active Perception</a></li>
+                                <li><a href="lec-humanoid-manipulation-fundamentals.html">04 — Fundamentals of Manipulation</a></li>
+                                <li><a href="lec-humanoid-motion-planning.html">05 — Motion Planning for Manipulation</a></li>
+                                <li><a href="lec-humanoid-trajectory.html">06 — Trajectory Generation &amp; Optimization</a></li>
+                                <li class="active"><a href="lec-humanoid-grasping.html">07 — Grasping &amp; Pushing</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Grasp Synthesis</a></li>
+                                <li><a href="#">Antipodal Grasp</a></li>
+                                <li><a href="#">Pushing</a></li>
+                                <li><a href="#">GraspNet</a></li>
+                                <li><a href="#">Sim-to-Real</a></li>
+                                <li><a href="#">GQ-CNN</a></li>
+                                <li><a href="#">Pre-Grasp Manipulation</a></li>
+                                <li><a href="#">Stable Push</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

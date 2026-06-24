@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Introduction to CNNs — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">ML for Robotics &amp; Computer Vision</p>
+                    <h2>Introduction to CNNs</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-mlrcv-intro-cnns.html">Introduction to CNNs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">ML for Robotics &amp; Computer Vision · Lec 06</span>
+                        <h1>Introduction to CNNs</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Nov 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Convolutional Neural Networks (CNNs) are the dominant architecture for image-based perception. They exploit the spatial structure of images through local connectivity and weight sharing, enabling efficient learning of hierarchical features without manual design.</p>
+
+                        <h2>1. Why Not Fully-Connected Layers for Images?</h2>
+                        <p>A fully-connected (FC) layer connects every input unit to every output unit. For a modest 224×224×3 colour image, the input has 150,528 values. A single FC layer with 4,096 units would have 150,528 × 4,096 ≈ 617 million parameters — just for one layer. This is computationally prohibitive, and ignores the key structure of images: nearby pixels are correlated, and the same local pattern (an edge, a corner) can appear anywhere in the image. FC layers learn no such inductive biases.</p>
+
+                        <h2>2. The Convolutional Layer</h2>
+                        <p>A convolution layer applies a small learnable filter (kernel) K of size k×k across the entire input feature map F. The output (feature map) at position (i, j) is:</p>
+
+                        <div class="math_block">
+                            (F ★ K)(i, j) = Σₘ Σₙ F(i+m, j+n) · K(m, n)
+                        </div>
+
+                        <p>Key hyperparameters:</p>
+                        <ul>
+                            <li><strong>Kernel size:</strong> typically 3×3 or 5×5. Smaller kernels have fewer parameters and allow deeper networks for the same receptive field.</li>
+                            <li><strong>Stride s:</strong> how many pixels the kernel moves per step. Stride 2 halves the spatial dimensions.</li>
+                            <li><strong>Padding:</strong> "valid" padding shrinks the output; "same" padding adds zeros around the border so the output has the same H×W as the input.</li>
+                        </ul>
+                        <p>A layer with F filters applied to an input of shape H×W×C produces an output of shape H'×W'×F. Each filter is a C-channel learnable weight tensor — so a 3×3×C filter has 9C parameters + 1 bias.</p>
+
+                        <h2>3. Parameter Sharing</h2>
+                        <p>The same filter weights are applied at every spatial position — this is <strong>parameter sharing</strong>. A 3×3×3 filter has only 27 learnable weights regardless of the input image size. Compare to an FC layer connecting 32×32×3 input to a single 32×32 output map: 32×32×3 × 32×32 = ~3 million weights. Parameter sharing exploits translation invariance: an edge detector should look the same wherever edges appear.</p>
+
+                        <h2>4. Pooling Layers</h2>
+                        <p>Pooling downsamples the spatial dimensions, reducing computation and providing local translation invariance. <strong>Max pooling</strong> takes the maximum value in each pooling window (e.g., 2×2 with stride 2 halves H and W). <strong>Average pooling</strong> takes the mean. Max pooling is more common in classification networks because it selects the strongest activation, discarding weak responses. Global average pooling (GAP) averages each entire feature map to a scalar — used in modern architectures (ResNet, MobileNet) to replace FC layers before the output.</p>
+
+                        <h2>5. Activation Functions</h2>
+                        <p>Without a non-linearity, stacking conv layers is equivalent to a single linear transformation. The <strong>Rectified Linear Unit (ReLU)</strong> is the standard choice:</p>
+
+                        <div class="math_block">
+                            ReLU(x) = max(0, x)
+                        </div>
+
+                        <p>ReLU advantages: (1) no vanishing gradient for positive activations — the gradient is exactly 1; (2) computationally trivial; (3) induces sparsity (negative activations become 0). The "dying ReLU" problem (units permanently outputting 0 if bias becomes very negative) is addressed by Leaky ReLU and ELU variants.</p>
+
+                        <h2>6. LeNet-5 — Historical Architecture</h2>
+                        <p>LeCun et al.'s LeNet-5 (1998) pioneered the modern CNN design for handwritten digit recognition: CONV(6 filters, 5×5) → AvgPool(2×2) → CONV(16 filters, 5×5) → AvgPool(2×2) → FC(120) → FC(84) → Output(10). It achieved 99.2% on MNIST with only ~60k parameters. The core insight — alternating convolution and pooling layers to build increasingly abstract representations — remains the backbone of all modern CNNs.</p>
+
+                        <div class="note_box">
+                            <strong>Receptive Field</strong>
+                            The receptive field of a unit is the region of the input that can influence its output. Stacking conv layers with 3×3 kernels: layer 1 sees 3×3, layer 2 sees 5×5, layer 3 sees 7×7. Deep networks have large effective receptive fields despite using small kernels — each 3×3 layer adds 2 to the effective receptive field size.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-mlrcv-ml-cv-tasks.html">ML for CV Tasks</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-mlrcv-learning-cnns.html">Learning CNNs</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">ML for Robotics &amp; CV</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-mlrcv-regression.html">01 — Regression</a></li>
+                                <li><a href="lec-mlrcv-classification.html">02 — Classification</a></li>
+                                <li><a href="lec-mlrcv-unsupervised.html">03 — Unsupervised Learning</a></li>
+                                <li><a href="lec-mlrcv-ensemble.html">04 — Ensemble Learning</a></li>
+                                <li><a href="lec-mlrcv-ml-cv-tasks.html">05 — ML for CV Tasks</a></li>
+                                <li class="active"><a href="lec-mlrcv-intro-cnns.html">06 — Introduction to CNNs</a></li>
+                                <li><a href="lec-mlrcv-learning-cnns.html">07 — Learning CNNs</a></li>
+                                <li><a href="lec-mlrcv-building-cnns.html">08 — Building CNNs</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Convolution</a></li>
+                                <li><a href="#">Max Pooling</a></li>
+                                <li><a href="#">ReLU</a></li>
+                                <li><a href="#">Feature Maps</a></li>
+                                <li><a href="#">LeNet</a></li>
+                                <li><a href="#">Receptive Field</a></li>
+                                <li><a href="#">Weight Sharing</a></li>
+                                <li><a href="#">Deep Learning</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

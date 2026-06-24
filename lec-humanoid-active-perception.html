@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Active Perception — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Humanoid Robotics</p>
+                    <h2>Active Perception</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-humanoid-active-perception.html">Active Perception</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Humanoid Robotics · Lec 03</span>
+                        <h1>Active Perception</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Active perception treats sensing as a decision-making problem: instead of passively processing whatever the sensor delivers, the robot actively controls sensor placement and orientation to maximise the information acquired. For a humanoid with a movable head and eyes, this is a powerful capability that mirrors the way humans use gaze to guide attention and reduce perceptual uncertainty.</p>
+
+                        <h2>1. Passive vs Active Perception</h2>
+                        <p><strong>Passive perception</strong> processes the sensor stream as-is. All computation is on the received data; there is no feedback from the perception system to the sensor. Passive systems are simple but waste resources on uninformative views and can fail when the most informative viewpoint is not the current one.</p>
+                        <p><strong>Active perception</strong> closes the loop: the current state of knowledge about the scene (uncertainty map, object hypotheses) feeds back to control what the sensor looks at next. The robot becomes an agent that actively seeks information, trading exploration efficiency for better estimates.</p>
+
+                        <h2>2. Foveal Vision and Visual Attention</h2>
+                        <p>The human retina provides a useful model. The <strong>fovea</strong> (central 2° of vision) offers ~0.5 arcminute resolution, capturing fine detail. The peripheral retina covers ~180° but at dramatically lower resolution. The brain uses saccadic eye movements (fast jumps) to direct the high-resolution fovea to points of interest, building a high-resolution model of the scene from many fixations.</p>
+                        <p>Humanoid visual systems often mimic this with: a wide-angle, low-resolution camera for peripheral scene understanding and saliency detection, and a high-resolution camera (or zoom lens) at the head centre for foveal fixation on targets of interest. The gaze control system directs the high-res camera.</p>
+
+                        <h2>3. Gaze Control</h2>
+                        <p>Gaze control moves the head and optionally eye joints to fixate on a target. Key behaviours:</p>
+                        <ul>
+                            <li><strong>Saccades:</strong> fast ballistic eye movements (up to 700°/s) to rapidly shift fixation. Controlled open-loop during the movement itself.</li>
+                            <li><strong>Smooth pursuit:</strong> continuously tracks a moving target, minimising target slip on the retina. Requires a velocity estimate of the target.</li>
+                            <li><strong>Vergence:</strong> rotate the two eyes inward/outward to fixate at different depths. Provides a strong depth cue (vergence angle).</li>
+                            <li><strong>Vestibulo-Ocular Reflex (VOR):</strong> stabilises gaze during head motion by rotating the eyes equal and opposite to head rotation (mediated by the vestibular system). Critical for stable perception during walking.</li>
+                        </ul>
+
+                        <h2>4. Information Gain and Next-Best-View Planning</h2>
+                        <p>In active 3D reconstruction and manipulation, the robot chooses the next sensor viewpoint to maximise information gain. Formally, model the current scene knowledge as a probabilistic occupancy map M. The information gain of a candidate view v is the expected reduction in map entropy:</p>
+
+                        <div class="math_block">
+                            IG(v) = H(M) − E[H(M | z_v)]
+                        </div>
+
+                        <p>where z_v is the expected sensor measurement from view v and H is entropy. This is equivalent to the mutual information I(M; z_v) between the map and the sensor reading. Computing this exactly is expensive — practical approximations use frontier-based methods: identify frontier voxels at the boundary between known free space and unknown space, compute visibility from candidate viewpoints, and select the viewpoint that observes the most frontier voxels.</p>
+
+                        <h2>5. Active 3D Reconstruction</h2>
+                        <p>The classic Next-Best-View (NBV) pipeline:</p>
+                        <ol>
+                            <li>Maintain a volumetric map (TSDF or OctoMap).</li>
+                            <li>Sample candidate viewpoints around the current partial model.</li>
+                            <li>For each candidate, simulate the expected sensor measurement using ray casting.</li>
+                            <li>Score each candidate by information gain (frontier voxels covered, entropy reduction).</li>
+                            <li>Plan a path to the best viewpoint, move there, scan, update map.</li>
+                            <li>Repeat until the desired completeness is achieved.</li>
+                        </ol>
+                        <p>Applications: autonomous inspection of industrial components, object scanning for manipulation, semantic mapping of unexplored rooms.</p>
+
+                        <h2>6. Active Perception for Manipulation</h2>
+                        <p>For grasping, the key challenge is accurate object pose estimation. Active perception helps by:</p>
+                        <ul>
+                            <li><strong>Fixation on the target object:</strong> move the head to centre the object in the high-resolution foveal camera before attempting a grasp.</li>
+                            <li><strong>Look-around:</strong> observe the object from multiple viewpoints to disambiguate its pose (especially for symmetric or partially occluded objects).</li>
+                            <li><strong>Eye-hand coordination:</strong> track the hand and object simultaneously during a manipulation sequence to detect contact events and track grasp slip.</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>Attention Maps</strong>
+                            Modern deep learning approaches to visual attention (transformer attention mechanisms, saliency maps from GradCAM) provide data-driven alternatives to hand-designed saliency detectors. These can be combined with active gaze control to direct the humanoid's camera towards task-relevant regions.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-humanoid-3d-world.html">3D World Representations</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-humanoid-manipulation-fundamentals.html">Fundamentals of Manipulation</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Humanoid Robotics</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-humanoid-intro.html">01 — Intro &amp; Perception Basics</a></li>
+                                <li><a href="lec-humanoid-3d-world.html">02 — 3D World Representations</a></li>
+                                <li class="active"><a href="lec-humanoid-active-perception.html">03 — Active Perception</a></li>
+                                <li><a href="lec-humanoid-manipulation-fundamentals.html">04 — Fundamentals of Manipulation</a></li>
+                                <li><a href="lec-humanoid-motion-planning.html">05 — Motion Planning for Manipulation</a></li>
+                                <li><a href="lec-humanoid-trajectory.html">06 — Trajectory Generation &amp; Optimization</a></li>
+                                <li><a href="lec-humanoid-grasping.html">07 — Grasping &amp; Pushing</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Active Perception</a></li>
+                                <li><a href="#">Gaze Control</a></li>
+                                <li><a href="#">Next-Best-View</a></li>
+                                <li><a href="#">Information Gain</a></li>
+                                <li><a href="#">Saccades</a></li>
+                                <li><a href="#">VOR</a></li>
+                                <li><a href="#">Eye-Hand Coordination</a></li>
+                                <li><a href="#">Visual Attention</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

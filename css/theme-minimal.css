@@ -1,0 +1,1134 @@
+/* =========================================
+   MINIMAL THEME — Grey / Black / White
+   Robotics Portfolio Override
+   ========================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ---- Typography ---- */
+body {
+    font-family: 'Inter', 'Roboto', sans-serif;
+    color: #333333;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', 'Rubik', sans-serif;
+    letter-spacing: -0.3px;
+}
+
+/* ---- HEADER — dark bar ---- */
+.header_area {
+    background: #111111 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: none !important;
+}
+
+.header_area .navbar {
+    background: transparent !important;
+}
+
+.header_area .navbar-brand,
+.header_area .navbar-brand strong {
+    color: #ffffff !important;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.header_area .navbar .nav .nav-item .nav-link {
+    color: #aaaaaa !important;
+    letter-spacing: 0.5px;
+    font-size: 13px;
+}
+
+.header_area .navbar .nav .nav-item:hover .nav-link,
+.header_area .navbar .nav .nav-item.active .nav-link {
+    color: #ffffff !important;
+}
+
+.header_area .icon-bar {
+    background-color: #ffffff !important;
+}
+
+.header_area.navbar_fixed .main_menu {
+    background: #111111 !important;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.header_area.navbar_fixed .main_menu .navbar .nav .nav-item .nav-link {
+    color: #aaaaaa !important;
+    line-height: 70px;
+}
+
+/* Dropdown */
+.header_area .navbar .submenu ul {
+    background: #1a1a1a !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+}
+
+.header_area .navbar .submenu ul .nav-item {
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+.header_area .navbar .submenu ul .nav-item .nav-link {
+    color: #aaaaaa !important;
+}
+
+.header_area .navbar .submenu ul .nav-item:hover .nav-link {
+    background: #111111 !important;
+    color: #ffffff !important;
+}
+
+/* ---- HERO / HOME BANNER ---- */
+.home_banner_area {
+    background: #111111 !important;
+    background-image: none !important;
+}
+
+.home_banner_area .banner_content h1 {
+    color: #ffffff;
+    font-size: 52px;
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+}
+
+.home_banner_area .banner_content h3 {
+    color: #888888;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+}
+
+.home_banner_area .banner_content h3::after {
+    display: none;
+}
+
+.home_banner_area .banner_content h5 {
+    color: #999999;
+    font-size: 15px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    line-height: 1.6;
+    margin-bottom: 36px;
+}
+
+/* ---- GRADIENT KILL ---- */
+.gradient-bg,
+.gradient-bg2 {
+    background: #1a1a1a !important;
+    background-image: none !important;
+}
+
+.gradient-color {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: #111111 !important;
+}
+
+/* ---- BUTTONS ---- */
+.primary_btn {
+    background-image: none !important;
+    background: #ffffff !important;
+    border: 1.5px solid #ffffff !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    color: #111111 !important;
+    letter-spacing: 1.5px;
+    font-size: 12px;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.primary_btn:hover {
+    background: transparent !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: 1.5px solid #ffffff !important;
+    box-shadow: none !important;
+    background-clip: unset !important;
+}
+
+/* Outside dark hero — black buttons */
+.about_area .primary_btn,
+.portfolio_area .primary_btn,
+.features_area .primary_btn,
+.blog_details .primary_btn,
+.lectures_area .primary_btn,
+footer .primary_btn {
+    background: #111111 !important;
+    border-color: #111111 !important;
+    color: #ffffff !important;
+}
+
+.about_area .primary_btn:hover,
+.portfolio_area .primary_btn:hover,
+.features_area .primary_btn:hover,
+.blog_details .primary_btn:hover,
+.lectures_area .primary_btn:hover,
+footer .primary_btn:hover {
+    background: transparent !important;
+    color: #111111 !important;
+    border-color: #111111 !important;
+}
+
+.primary_btn.tr-bg {
+    background: transparent !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: none !important;
+}
+
+.primary_btn.tr-bg:hover {
+    background: #ffffff !important;
+    color: #111111 !important;
+    border-color: #ffffff !important;
+}
+
+/* ---- ABOUT SECTION ---- */
+.about_area {
+    background: #ffffff;
+}
+
+.about_area .main_title h2 {
+    color: #111111;
+    font-weight: 700;
+    font-size: 30px;
+}
+
+.about_area .main_title p {
+    color: #555555;
+    line-height: 1.75;
+}
+
+/* ---- SKILL / FEATURE CARDS ---- */
+.features_area {
+    background: #f8f8f8;
+}
+
+.feature_item {
+    background: #ffffff !important;
+    border: 1px solid #e8e8e8 !important;
+    border-radius: 0 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature_item:hover {
+    background: #ffffff !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07) !important;
+    border-color: #cccccc !important;
+}
+
+.feature_item h4 {
+    color: #111111;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.feature_item p {
+    color: #777777;
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+/* ---- MAIN TITLE ---- */
+.main_title h2 {
+    color: #111111;
+    font-weight: 700;
+}
+
+.main_title p {
+    color: #666666;
+}
+
+/* ---- PORTFOLIO ---- */
+.portfolio_area {
+    background: #ffffff;
+}
+
+.single_portfolio:hover .overlay {
+    background: rgba(17, 17, 17, 0.8) !important;
+}
+
+.portfolio_area .filters ul li {
+    color: #999999 !important;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+}
+
+.portfolio_area .filters ul li:hover,
+.portfolio_area .filters ul li.active {
+    color: #111111 !important;
+}
+
+.portfolio_box .short_info h4 {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.portfolio_box .short_info h4 a {
+    color: #111111;
+    text-transform: none;
+}
+
+.portfolio_box .short_info h4 a:hover {
+    color: #555555;
+}
+
+.portfolio_box .short_info p {
+    color: #999999;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+}
+
+/* ---- LECTURE NOTES SECTION ---- */
+.lectures_area {
+    background: #f5f5f5;
+}
+
+.lecture_card {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    padding: 32px;
+    margin-bottom: 24px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lecture_card:hover {
+    border-color: #aaaaaa;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+}
+
+.lecture_card .course_tag {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: #aaaaaa;
+    margin-bottom: 12px;
+}
+
+.lecture_card h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111111;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    text-transform: none;
+}
+
+.lecture_card p {
+    font-size: 13px;
+    color: #666666;
+    margin-bottom: 20px;
+    line-height: 1.65;
+}
+
+.lecture_card .read_more {
+    font-size: 11px;
+    font-weight: 700;
+    color: #111111;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-decoration: none;
+    border-bottom: 1.5px solid #111111;
+    padding-bottom: 2px;
+    transition: opacity 0.2s;
+}
+
+.lecture_card .read_more:hover {
+    opacity: 0.55;
+    text-decoration: none;
+}
+
+.section_label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #aaaaaa;
+    margin-bottom: 14px;
+}
+
+/* ---- FOOTER ---- */
+.footer_area::before {
+    background: #f5f5f5 !important;
+}
+
+.footer_area .footer_logo h4 {
+    color: #111111;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.footer_area .footer_social a i {
+    color: #888888 !important;
+    transition: color 0.2s ease;
+}
+
+.footer_area .footer_social a i:hover {
+    color: #111111 !important;
+}
+
+.footer_area .footer_bottom .footer-text {
+    color: #aaaaaa;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+}
+
+.footer_area .footer_bottom a {
+    color: #555555 !important;
+}
+
+/* ---- MODALS ---- */
+.modal-content {
+    border-radius: 0 !important;
+    border: 1px solid #dddddd;
+}
+
+.modal-header {
+    background: #f8f8f8;
+    border-bottom: 1px solid #eeeeee;
+    border-radius: 0;
+}
+
+.modal-header .modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111111;
+    letter-spacing: -0.2px;
+}
+
+.modal-footer {
+    background: #f8f8f8;
+    border-top: 1px solid #eeeeee;
+    border-radius: 0;
+}
+
+.badge-info {
+    background-color: #333333 !important;
+    border-radius: 0 !important;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 4px 8px;
+}
+
+.btn-secondary {
+    border-radius: 0 !important;
+    background: #555555 !important;
+    border-color: #555555 !important;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+/* ---- BLOG PAGES ---- */
+.blog_version .header_area {
+    position: relative;
+}
+
+.blog_area {
+    padding: 60px 0 80px;
+}
+
+.blog_left_sidebar .blog_item {
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 40px;
+    margin-bottom: 40px;
+}
+
+.blog_details h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111111;
+    margin: 14px 0 8px;
+    line-height: 1.35;
+    text-transform: none;
+}
+
+.blog_details h2 a {
+    color: #111111;
+}
+
+.blog_details h2 a:hover {
+    color: #555555;
+}
+
+.blog_details p {
+    color: #666666;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.blog_info .post_tag a {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #bbbbbb;
+}
+
+.blog_info .post_tag a.active,
+.blog_info .post_tag a:hover {
+    color: #111111;
+}
+
+.blog_meta li a {
+    color: #999999;
+    font-size: 12px;
+}
+
+.blog_meta li a:hover {
+    color: #111111;
+}
+
+.blog_meta li a i {
+    color: #cccccc;
+    margin-left: 4px;
+}
+
+/* Sidebar */
+.blog_right_sidebar .widget_title,
+.blog_right_sidebar h4.widget_title,
+.blog_right_sidebar h3.widget_title {
+    color: #111111 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    border-bottom: 1.5px solid #111111 !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 20px !important;
+}
+
+.single_sidebar_widget,
+.single-sidebar-widget {
+    background: #f9f9f9 !important;
+    padding: 24px !important;
+    margin-bottom: 24px !important;
+    border: 1px solid #eeeeee !important;
+    border-radius: 0 !important;
+}
+
+.post_item h3 a {
+    color: #333333;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.post_item h3 a:hover {
+    color: #111111;
+}
+
+.post_item p {
+    color: #bbbbbb;
+    font-size: 11px;
+}
+
+.cat-list li a {
+    color: #666666;
+    font-size: 13px;
+}
+
+.cat-list li a:hover {
+    color: #111111;
+}
+
+.cat-list li a p {
+    color: #888888;
+    font-size: 13px;
+}
+
+/* Tag cloud */
+.tag_cloud_widget ul li a {
+    border: 1px solid #dddddd !important;
+    color: #666666 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tag_cloud_widget ul li a:hover {
+    background: #111111 !important;
+    border-color: #111111 !important;
+    color: #ffffff !important;
+}
+
+/* Pagination */
+.blog-pagination .page-item .page-link {
+    border-radius: 0 !important;
+    color: #555555;
+    border-color: #dddddd;
+    font-size: 13px;
+}
+
+.blog-pagination .page-item.active .page-link {
+    background: #111111 !important;
+    border-color: #111111 !important;
+    color: #ffffff;
+}
+
+.blog-pagination .page-item .page-link:hover {
+    background: #f0f0f0;
+    color: #111111;
+}
+
+/* Blog inner banner */
+.banner_area .banner_inner {
+    background: #1a1a1a !important;
+    background-image: none !important;
+}
+
+.banner_area .banner_content h2 {
+    color: #ffffff;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.banner_area .banner_content .page_link a {
+    color: #888888;
+    font-size: 13px;
+}
+
+.banner_area .banner_content .page_link a:hover {
+    color: #ffffff;
+}
+
+/* Search widget */
+.search_widget .form-control {
+    border-radius: 0 !important;
+    border-color: #dddddd;
+    font-size: 13px;
+}
+
+.search_widget .btn-default {
+    border-radius: 0 !important;
+    background: #111111;
+    color: #ffffff;
+    border-color: #111111;
+}
+
+.search_widget .btn-default:hover {
+    background: #333333;
+}
+
+/* Author widget */
+.author_widget h4 {
+    color: #111111;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.author_widget p {
+    color: #888888;
+    font-size: 13px;
+}
+
+.author_widget .social_icon a i {
+    color: #888888;
+}
+
+.author_widget .social_icon a i:hover {
+    color: #111111;
+}
+
+/* Newsletter widget */
+.newsletter_widget .form-control,
+.newsletter_widget .input-group-text {
+    border-radius: 0 !important;
+    border-color: #dddddd;
+    font-size: 13px;
+}
+
+.newsletter_widget .bbtns {
+    background: #111111 !important;
+    color: #ffffff !important;
+    border-radius: 0 !important;
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 0 16px;
+    line-height: 38px;
+    white-space: nowrap;
+}
+
+.newsletter_widget .text-bottom {
+    font-size: 11px;
+    color: #aaaaaa;
+}
+
+/* Divider line */
+.br {
+    border-top: 1px solid #eeeeee;
+    margin: 20px 0;
+}
+
+/* Single blog post */
+.single_post_area .blog_details_inner h2,
+.single_post_area .blog_details_inner h3 {
+    color: #111111;
+    font-weight: 600;
+}
+
+.single_post_area .blog_details_inner p {
+    color: #444444;
+    line-height: 1.8;
+    font-size: 15px;
+}
+
+.single_post_area .blog_details_inner code {
+    background: #f0f0f0;
+    padding: 2px 6px;
+    font-size: 13px;
+    color: #333333;
+    border-radius: 2px;
+}
+
+/* ---- SEMESTER / COURSE STRUCTURE (homepage + blog) ---- */
+
+/* Homepage course tiles */
+.semester_block {
+    margin-bottom: 48px;
+}
+
+.semester_header_row {
+    display: flex;
+    align-items: center;
+    border-bottom: 2px solid #111111;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+}
+
+.semester_title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111111;
+    letter-spacing: -0.3px;
+    margin: 0;
+    text-transform: none;
+}
+
+.current_badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: #111111;
+    color: #ffffff;
+    padding: 3px 9px;
+    margin-left: 12px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+}
+
+.course_tile {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    text-decoration: none !important;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.course_tile:hover {
+    border-color: #aaaaaa;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    text-decoration: none !important;
+}
+
+.course_tile_num {
+    font-size: 10px;
+    font-weight: 700;
+    color: #cccccc;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.course_tile h5 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111111;
+    margin: 0;
+    line-height: 1.35;
+    text-transform: none;
+}
+
+/* Blog page: semester sections */
+.sem_section {
+    margin-bottom: 64px;
+}
+
+.sem_heading {
+    border-bottom: 2px solid #111111;
+    padding-bottom: 12px;
+    margin-bottom: 36px;
+}
+
+.sem_heading h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111111;
+    letter-spacing: -0.4px;
+    margin: 0;
+    text-transform: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Course group within a semester */
+.course_group {
+    margin-bottom: 48px;
+    padding-left: 0;
+}
+
+.course_heading {
+    font-size: 12px;
+    font-weight: 700;
+    color: #888888;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+/* Individual lecture entry */
+.lecture_entry {
+    display: flex;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.lecture_entry:last-of-type {
+    border-bottom: none;
+}
+
+.lecture_meta {
+    flex-shrink: 0;
+    width: 44px;
+    padding-top: 3px;
+}
+
+.lec_num {
+    font-size: 10px;
+    font-weight: 700;
+    color: #cccccc;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.lecture_body h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111111;
+    margin-bottom: 8px;
+    line-height: 1.35;
+    text-transform: none;
+}
+
+.lecture_body h4 a {
+    color: #111111;
+    text-decoration: none;
+}
+
+.lecture_body h4 a:hover {
+    color: #555555;
+    text-decoration: none;
+}
+
+.lecture_body p {
+    font-size: 13px;
+    color: #666666;
+    line-height: 1.65;
+    margin-bottom: 10px;
+}
+
+/* Sidebar nav */
+.sidebar_sem_label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #aaaaaa;
+    margin-bottom: 10px;
+    margin-top: 0;
+}
+
+.sidebar_nav {
+    list-style: none !important;
+    padding-left: 0 !important;
+    margin-bottom: 0;
+}
+
+.sidebar_nav li {
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.sidebar_nav li:last-child {
+    border-bottom: none;
+}
+
+.sidebar_nav li a {
+    font-size: 13px;
+    color: #555555;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.sidebar_nav li a:hover {
+    color: #111111;
+}
+
+/* ---- INDIVIDUAL LECTURE POST PAGE ---- */
+.post_content_wrapper {
+    padding: 60px 0 80px;
+}
+
+.post_header {
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 32px;
+    margin-bottom: 40px;
+}
+
+.post_course_tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: #aaaaaa;
+    margin-bottom: 14px;
+}
+
+.post_header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111111;
+    line-height: 1.3;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+    text-transform: none;
+}
+
+.post_meta {
+    font-size: 12px;
+    color: #aaaaaa;
+    letter-spacing: 0.3px;
+}
+
+.post_meta span {
+    margin-right: 20px;
+}
+
+.post_meta i {
+    margin-right: 4px;
+}
+
+.post_body h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111111;
+    margin: 36px 0 14px;
+    letter-spacing: -0.3px;
+    text-transform: none;
+}
+
+.post_body h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333333;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 24px 0 10px;
+}
+
+.post_body > p,
+.post_body p {
+    font-size: 15px;
+    color: #444444;
+    line-height: 1.8;
+    margin-bottom: 18px;
+}
+
+.post_body ul,
+.post_body ol {
+    font-size: 15px;
+    color: #444444;
+    line-height: 1.8;
+    margin-bottom: 18px;
+    padding-left: 22px;
+}
+
+.post_body li {
+    margin-bottom: 6px;
+}
+
+.note_box {
+    background: #f5f5f5;
+    border-left: 3px solid #111111;
+    padding: 16px 20px;
+    margin: 24px 0;
+    font-size: 14px;
+    color: #555555;
+    line-height: 1.7;
+}
+
+.note_box strong {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #111111;
+    margin-bottom: 6px;
+}
+
+.math_block {
+    background: #f8f8f8;
+    border: 1px solid #e8e8e8;
+    padding: 18px 24px;
+    margin: 24px 0;
+    text-align: center;
+    font-style: italic;
+    font-size: 15px;
+    color: #333333;
+    overflow-x: auto;
+}
+
+.post_body code {
+    background: #f0f0f0;
+    padding: 2px 7px;
+    font-size: 13px;
+    color: #333333;
+    border-radius: 2px;
+    font-family: 'Courier New', monospace;
+}
+
+.post_body pre {
+    background: #1a1a1a;
+    color: #eeeeee;
+    padding: 20px 24px;
+    margin: 24px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+}
+
+.post_body pre code {
+    background: none;
+    color: #eeeeee;
+    padding: 0;
+    border-radius: 0;
+    font-size: 13px;
+}
+
+.post_nav {
+    border-top: 1px solid #eeeeee;
+    padding-top: 28px;
+    margin-top: 48px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.post_nav a {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #111111;
+    text-decoration: none;
+    border-bottom: 1.5px solid #111111;
+    padding-bottom: 2px;
+    transition: opacity 0.2s;
+}
+
+.post_nav a:hover {
+    opacity: 0.5;
+    text-decoration: none;
+}
+
+.post_nav .nav_label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #aaaaaa;
+    margin-bottom: 6px;
+}
+
+/* Sidebar course contents */
+.course_contents_list {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0;
+}
+
+.course_contents_list li {
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+}
+
+.course_contents_list li:last-child {
+    border-bottom: none;
+}
+
+.course_contents_list li a {
+    color: #666666;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.course_contents_list li a:hover {
+    color: #111111;
+}
+
+.course_contents_list li.active a {
+    color: #111111;
+    font-weight: 600;
+}
+
+.course_contents_list li.active::before {
+    content: "›";
+    margin-right: 6px;
+    color: #111111;
+    font-weight: 700;
+}
+
+/* Mobile fixes */
+@media (max-width: 991px) {
+    .home_banner_area .banner_content h1 {
+        font-size: 34px;
+        letter-spacing: -0.5px;
+    }
+
+    .home_banner_area .banner_content h5 {
+        font-size: 13px;
+    }
+
+    .header_area .navbar-collapse {
+        background: #111111;
+        padding: 12px 0;
+        border-top: 1px solid rgba(255,255,255,0.08);
+    }
+}

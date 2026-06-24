@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Features: Keypoints — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Graph SLAM</p>
+                    <h2>Features — Keypoints</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-slam-features-keypoints.html">Features: Keypoints</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 09</span>
+                        <h1>Features — Keypoints</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Nov 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Feature-based visual SLAM and SfM require detecting stable, distinctive image locations — keypoints — that can be reliably found across frames with different viewpoints, scales, and illumination. This lecture covers the main keypoint detectors and what makes a good keypoint.</p>
+
+                        <h2>1. Properties of a Good Keypoint</h2>
+                        <ul>
+                            <li><strong>Repeatability:</strong> the same physical point should be detected across different views of the scene, even with viewpoint change, scale change, and illumination variation.</li>
+                            <li><strong>Distinctiveness:</strong> the local appearance around the keypoint should be unique enough to distinguish it from other keypoints in the image.</li>
+                            <li><strong>Locality:</strong> the keypoint should have compact support — its description should depend on a small image region.</li>
+                            <li><strong>Quantity:</strong> enough keypoints must be detected to have redundant coverage of the scene.</li>
+                            <li><strong>Efficiency:</strong> detection should be fast enough for real-time SLAM (30+ frames per second).</li>
+                        </ul>
+
+                        <h2>2. Harris Corner Detector</h2>
+                        <p>Harris &amp; Stephens (1988) detect corners by analysing the local gradient structure. The structure tensor (second-moment matrix) at each pixel is:</p>
+
+                        <div class="math_block">
+                            M = Σ_window [ Ix²  &nbsp;  IxIy ; IxIy  &nbsp;  Iy² ]
+                        </div>
+
+                        <p>where Ix, Iy are image gradients. The eigenvalues λ₁, λ₂ of M describe the gradient energy in the two principal directions. A <strong>corner</strong> has both λ₁ and λ₂ large; an <strong>edge</strong> has one large and one small; a <strong>flat region</strong> has both small. The Harris response function avoids explicit eigendecomposition:</p>
+
+                        <div class="math_block">
+                            R = det(M) − k · trace(M)² = λ₁λ₂ − k(λ₁+λ₂)²
+                        </div>
+
+                        <p>with k ≈ 0.04–0.06. Non-maximum suppression retains local maxima of R above a threshold as keypoints. Harris is rotation-invariant but <em>not scale-invariant</em>.</p>
+
+                        <h2>3. Scale Space and LoG</h2>
+                        <p>To detect scale-invariant features, build a <strong>scale space</strong> by convolving the image with Gaussians at multiple scales σ: L(x, y, σ) = G(x, y, σ) * I(x, y). The <strong>Laplacian of Gaussian (LoG)</strong> ∇²L detects blob-like structures. A feature is a local maximum in the 3D space (x, y, σ) — this determines both the location and the <em>characteristic scale</em> σ* at which the blob is most prominent.</p>
+
+                        <h2>4. SIFT Keypoints — DoG Detector</h2>
+                        <p>SIFT (Lowe, 2004) approximates LoG with the <strong>Difference of Gaussians (DoG)</strong>: D(x, y, σ) = L(x, y, kσ) − L(x, y, σ). This is a band-pass filter and is much faster than LoG. Keypoints are detected as local extrema in the (x, y, σ) DoG pyramid. Two additional filtering steps are applied:</p>
+                        <ul>
+                            <li><strong>Low-contrast rejection:</strong> remove candidates with |D| &lt; threshold.</li>
+                            <li><strong>Edge rejection:</strong> compute the Hessian of D at the candidate location. If the ratio of principal curvatures (largest/smallest eigenvalue) exceeds a threshold r_th, the point is on an edge, not a corner, and is discarded.</li>
+                        </ul>
+
+                        <h2>5. FAST Keypoints</h2>
+                        <p>FAST (Rosten &amp; Drummond, 2006) trades accuracy for extreme speed — critical for real-time SLAM on embedded hardware. A pixel p is a corner if there exist at least N = 9 consecutive pixels on a circle of radius 3 around p that are all brighter than I(p) + t or all darker than I(p) − t (threshold t ≈ 10). A decision tree over the 16 circle pixels accelerates the test. FAST detects thousands of corners in milliseconds but has no natural scale information — scale must be handled via an image pyramid.</p>
+
+                        <div class="note_box">
+                            <strong>Scale Selection</strong>
+                            The characteristic scale of a SIFT keypoint is the DoG pyramid scale σ* that maximises |D(x*, y*, σ)|. This σ* is used to normalise the patch size when computing the descriptor: the descriptor window is always 16σ* × 16σ* pixels, making the descriptor scale-invariant. FAST keypoints use the pyramid level index as a proxy for scale.
+                        </div>
+
+                        <p>In practice, ORB (which combines FAST detection with BRIEF descriptors) is the go-to choice for real-time SLAM (ORB-SLAM2/3), while SIFT remains the gold standard for offline SfM (COLMAP). The next lecture covers how to describe the local patch around each detected keypoint.</p>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-slam-bundle-adjustment-2.html">Bundle Adjustment II</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-slam-features-descriptors.html">Features: Descriptors</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li class="active"><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Keypoints</a></li>
+                                <li><a href="#">Harris Corner</a></li>
+                                <li><a href="#">SIFT</a></li>
+                                <li><a href="#">FAST</a></li>
+                                <li><a href="#">Scale Space</a></li>
+                                <li><a href="#">DoG</a></li>
+                                <li><a href="#">ORB-SLAM</a></li>
+                                <li><a href="#">Feature Detection</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

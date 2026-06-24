@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Bundle Adjustment — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Graph SLAM</p>
+                    <h2>Bundle Adjustment</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-slam-bundle-adjustment.html">Bundle Adjustment</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 07</span>
+                        <h1>Bundle Adjustment</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Bundle Adjustment (BA) is the gold-standard back-end optimisation for Structure-from-Motion and SLAM. It jointly refines all camera poses and all 3D point positions to minimise the total reprojection error across all images and all visible points.</p>
+
+                        <h2>1. The BA Problem</h2>
+                        <p>Given N cameras with parameters {Pᵢ} and M 3D points {Xⱼ}, with visibility matrix W (wᵢⱼ = 1 if point j is observed in camera i), the objective is:</p>
+
+                        <div class="math_block">
+                            min Σᵢ Σⱼ wᵢⱼ · ρ( ||xᵢⱼ − π(Pᵢ, Xⱼ)||² )
+                        </div>
+
+                        <p>where π(P, X) is the projection function, xᵢⱼ is the observed image point, and ρ is a robust loss function (identity for standard BA, Huber or Cauchy for robust BA). The variables being optimised are the camera parameters {Pᵢ} (typically 6 DOF pose + 4 DOF intrinsics = 10 per camera) and the point coordinates {Xⱼ} (3 DOF each).</p>
+
+                        <h2>2. Non-Linear Least Squares</h2>
+                        <p>BA is a non-linear least-squares (NLLS) problem. The Gauss-Newton method linearises the residuals via the Jacobian J = ∂r/∂θ and solves the normal equations at each iteration:</p>
+
+                        <div class="math_block">
+                            (JᵀJ) δ = −Jᵀ r
+                        </div>
+
+                        <p><strong>Levenberg-Marquardt (LM)</strong> adds a damping term λI to the normal equations: (JᵀJ + λI) δ = −Jᵀr. When λ is large, this is a small gradient descent step (safe but slow); when λ is small, it reduces to Gauss-Newton (fast but risky). LM adaptively adjusts λ based on whether the step decreased the cost, giving robust convergence from mediocre initialisations.</p>
+
+                        <h2>3. Jacobian Sparsity</h2>
+                        <p>The Jacobian J for BA is extremely sparse. A residual for point j in camera i depends only on camera i's parameters and point j's coordinates — not on any other camera or point. This means J has a specific 2-block structure with very few non-zeros. Naively inverting the dense JᵀJ matrix would cost O((10N + 3M)³) — infeasible for large reconstructions.</p>
+
+                        <p>Partition the parameters into camera variables c (6 or 10 per camera) and point variables p (3 each). The Jacobian is J = [J_c | J_p].</p>
+
+                        <h2>4. The Schur Complement Trick</h2>
+                        <p>Partition the normal equations using the block structure:</p>
+
+                        <div class="math_block">
+                            [Jcᵀ Jc  &nbsp;  Jcᵀ Jp] [δc]   [Jcᵀ r]
+            <br>
+                            [Jpᵀ Jc  &nbsp;  Jpᵀ Jp] [δp] = [Jpᵀ r]
+                        </div>
+
+                        <p>Since Jpᵀ Jp is block-diagonal (each point only interacts with itself), it is cheap to invert. Marginalising out δp (back-substitution) gives the <strong>reduced camera system</strong> (Schur complement):</p>
+
+                        <div class="math_block">
+                            S · δc = v, &nbsp; where S = Jcᵀ Jc − Jcᵀ Jp (Jpᵀ Jp)⁻¹ Jpᵀ Jc
+                        </div>
+
+                        <p>Solve the N×N camera-only system for δc, then back-substitute to get δp. This reduces the dominant cost from O((N+M)³) to O(N³ + NM), an enormous saving when M ≫ N (many more points than cameras).</p>
+
+                        <h2>5. Practical Considerations</h2>
+                        <ul>
+                            <li><strong>Parameterisation:</strong> rotation must be parameterised carefully (Lie algebra se(3), angle-axis, or quaternions) to avoid singularities and maintain SO(3) constraints.</li>
+                            <li><strong>Sparse solvers:</strong> even S may be sparse (cameras only share constraints through observed points). Iterative solvers (PCG with Jacobi preconditioner) exploit this.</li>
+                            <li><strong>Initialisation quality:</strong> BA is local — a good initialisation from incremental SfM is essential to converge to the correct solution.</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>Convergence Check</strong>
+                            Monitor mean reprojection error per LM iteration. Good BA convergence typically reaches below 1 pixel mean error for well-calibrated cameras. Stagnation at high error (e.g., 5+ px) suggests outliers or poor initialisation — use robust loss functions or re-initialise.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-slam-triangulation.html">Triangulation</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-slam-bundle-adjustment-2.html">Bundle Adjustment II</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li class="active"><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Bundle Adjustment</a></li>
+                                <li><a href="#">Schur Complement</a></li>
+                                <li><a href="#">Levenberg-Marquardt</a></li>
+                                <li><a href="#">Reprojection Error</a></li>
+                                <li><a href="#">Non-linear Least Squares</a></li>
+                                <li><a href="#">Jacobian Sparsity</a></li>
+                                <li><a href="#">SfM</a></li>
+                                <li><a href="#">SLAM Back-end</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

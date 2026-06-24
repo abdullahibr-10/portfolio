@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>3D World Representations — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Humanoid Robotics</p>
+                    <h2>3D World Representations</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-humanoid-3d-world.html">3D World Representations</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Humanoid Robotics · Lec 02</span>
+                        <h1>3D World Representations</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>A humanoid operating in the real world must maintain an internal model of the 3D environment for both navigation and manipulation. The choice of world representation is a key engineering decision that affects memory usage, update speed, query efficiency, and compatibility with downstream planning algorithms.</p>
+
+                        <h2>1. Why 3D Matters for Humanoids</h2>
+                        <p>Unlike wheeled robots, humanoids interact with the world volumetrically: they step over objects, reach around obstacles, and grasp items from arbitrary angles. A 2D occupancy grid (flat-world assumption) is insufficient — the robot must know the 3D shape of objects to plan collision-free arm motions and to choose appropriate grasp poses. Navigation requires modelling the 3D free space through which the legs and body must pass.</p>
+
+                        <h2>2. Point Clouds</h2>
+                        <p>A point cloud is an unordered set of 3D points {xᵢ} ∈ ℝ³, typically obtained directly from RGB-D cameras or LiDAR. Each point may also carry colour (RGB) and intensity (from LiDAR). Advantages: direct sensor output, no discretisation error, compact for sparse environments. Disadvantages: no explicit connectivity between points, surface normals must be estimated from neighbourhoods, queries (collision checking, nearest neighbour) require spatial indexing structures (k-d tree, octree). The PCL (Point Cloud Library) provides standard algorithms for filtering, segmentation, and registration on point clouds.</p>
+
+                        <h2>3. Triangle Meshes</h2>
+                        <p>A triangle mesh represents a surface as a set of vertices V and triangular faces F. Meshes are compact (memory-efficient for smooth surfaces), support per-vertex normals and texture coordinates, and are the standard format for physics simulation (MuJoCo, PyBullet, Gazebo) and collision checking (FCL library). However, meshes are hard to update online — adding new observations requires re-meshing, which is expensive. They are therefore mainly used for pre-known object models, not for dynamic environment maps.</p>
+
+                        <h2>4. Signed Distance Fields (SDF)</h2>
+                        <p>An SDF stores at each point in space the signed distance to the nearest surface: positive outside, negative inside, zero on the surface. SDFs enable:</p>
+                        <ul>
+                            <li><strong>Smooth collision checking:</strong> the SDF value at a query point is the minimum clearance to any obstacle. Zero-crossing = collision.</li>
+                            <li><strong>Gradient-based motion planning:</strong> the gradient of the SDF at any point always points away from the surface — useful for gradient-based obstacle avoidance (CHOMP, GPMP).</li>
+                            <li><strong>Surface extraction:</strong> marching cubes on the SDF produces a triangle mesh of the surface.</li>
+                        </ul>
+
+                        <h2>5. Truncated SDF (TSDF)</h2>
+                        <p>KinectFusion (Newcombe et al., 2011) introduced the TSDF for real-time dense 3D reconstruction. Only store the SDF within a narrow band (±truncation distance τ) around the surface. Each voxel stores a running weighted average of SDF observations: d_new = (w_old · d_old + w_obs · d_obs) / (w_old + w_obs). Observations come from depth image ray casting. The result is a complete, noise-averaged surface model that fuses hundreds of depth frames. Marching cubes extracts the mesh for visualisation or manipulation planning.</p>
+
+                        <h2>6. OctoMap</h2>
+                        <p>OctoMap (Hornung et al., 2013) is the standard for 3D navigation maps in ROS. It uses an octree (recursive spatial subdivision) for memory-efficient volumetric occupancy. Each leaf voxel stores a log-odds occupancy probability. Updates use ray casting from the sensor: occupied cells at measurement endpoints increment their log-odds; free cells along the ray decrement. Key advantages:</p>
+                        <ul>
+                            <li>Memory-adaptive: only allocate voxels for occupied or free space; unknown space uses no memory.</li>
+                            <li>Multi-resolution: query at different resolutions by traversing to different tree depths.</li>
+                            <li>Probabilistic: integrates uncertain measurements correctly, handles moving objects via temporal decay.</li>
+                        </ul>
+
+                        <h2>7. RGB-D Sensors</h2>
+                        <p>Practical depth sensors for humanoid manipulation:</p>
+                        <ul>
+                            <li><strong>Structured light (Kinect v1, Intel RealSense D435):</strong> project a known IR pattern and decode distortion to compute depth. Good accuracy at 0.5–3m, fails outdoors (sunlight swamps IR).</li>
+                            <li><strong>Stereo (ZED 2, RealSense D435):</strong> passive stereo — works outdoors, accuracy degrades in textureless regions.</li>
+                            <li><strong>Time-of-flight (ToF, Kinect v2):</strong> measure round-trip time of IR pulses. More accurate than structured light, better outdoors, but higher noise at range.</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>Representation Choice for the G1</strong>
+                            For the Unitree G1 lab: OctoMap for whole-room navigation planning; TSDF (using Open3D or Voxblox) for fine-resolution manipulation workspace modelling around the hands; point clouds as the raw sensor output and for real-time obstacle checking.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-humanoid-intro.html">Introduction &amp; Perception Basics</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-humanoid-active-perception.html">Active Perception</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Humanoid Robotics</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-humanoid-intro.html">01 — Intro &amp; Perception Basics</a></li>
+                                <li class="active"><a href="lec-humanoid-3d-world.html">02 — 3D World Representations</a></li>
+                                <li><a href="lec-humanoid-active-perception.html">03 — Active Perception</a></li>
+                                <li><a href="lec-humanoid-manipulation-fundamentals.html">04 — Fundamentals of Manipulation</a></li>
+                                <li><a href="lec-humanoid-motion-planning.html">05 — Motion Planning for Manipulation</a></li>
+                                <li><a href="lec-humanoid-trajectory.html">06 — Trajectory Generation &amp; Optimization</a></li>
+                                <li><a href="lec-humanoid-grasping.html">07 — Grasping &amp; Pushing</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Point Clouds</a></li>
+                                <li><a href="#">OctoMap</a></li>
+                                <li><a href="#">TSDF</a></li>
+                                <li><a href="#">SDF</a></li>
+                                <li><a href="#">RGB-D Sensors</a></li>
+                                <li><a href="#">Triangle Mesh</a></li>
+                                <li><a href="#">Voxel Map</a></li>
+                                <li><a href="#">3D Mapping</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

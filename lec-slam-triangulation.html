@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Triangulation — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Graph SLAM</p>
+                    <h2>Triangulation</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-slam-triangulation.html">Triangulation</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 06</span>
+                        <h1>Triangulation</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Triangulation recovers the 3D position of a scene point from its observations in two or more images, given the camera matrices. It is a core building block of visual odometry, Structure-from-Motion (SfM), and stereo depth estimation.</p>
+
+                        <h2>1. The Triangulation Problem</h2>
+                        <p>Given camera matrices P₁ and P₂ and image observations x₁ and x₂ of the same 3D point X, recover X. In the noiseless case, the rays from C₁ through x₁ and from C₂ through x₂ intersect exactly at X. With image noise, the rays in general <em>do not intersect</em> — we must find X that is "closest" to both rays in some sense.</p>
+
+                        <h2>2. Linear (DLT) Triangulation</h2>
+                        <p>The cross-product formulation x × (PX) = 0 yields 2 linear equations per view. From both cameras, stacking gives AX = 0 where A is 4×4. Solve via SVD: X is the last column of V in A = UΣVᵀ. The result is in homogeneous coordinates — dehomogenise by dividing by the last coordinate.</p>
+
+                        <p>This is simple and fast, but minimises algebraic error (the residual of AX=0) rather than the geometrically meaningful reprojection error.</p>
+
+                        <h2>3. Algebraic vs Geometric Error</h2>
+                        <p>Algebraic error (||AX||) is convenient but has no direct geometric interpretation. The <strong>reprojection error</strong> measures the pixel distance between the observed point and the projection of X back into the image:</p>
+                        <div class="math_block">
+                            e_rep = Σᵢ ||xᵢ − π(Pᵢ, X)||²
+                        </div>
+                        <p>Minimising reprojection error gives the maximum-likelihood estimate under Gaussian pixel noise and is the correct criterion for triangulation. However, it requires iterative optimisation.</p>
+
+                        <h2>4. Midpoint Method</h2>
+                        <p>An intuitive alternative: find the 3D point that minimises the sum of squared distances to each back-projected ray. Each ray is defined by origin oᵢ = Cᵢ (camera centre) and direction dᵢ = Pᵢ⁺xᵢ (back-projected unit direction). The point on ray i closest to X is oᵢ + tᵢdᵢ where tᵢ = dᵢᵀ(X − oᵢ). The midpoint minimising Σᵢ ||X − (oᵢ + tᵢdᵢ)||² has a closed-form solution using two-ray geometry. For two cameras this is quick and gives a good geometric interpretation.</p>
+
+                        <h2>5. Optimal Triangulation</h2>
+                        <p>The optimal solution (Kanatani, Lindstrom) minimises reprojection error exactly. Lindstrom (2010) derived a fast non-iterative solution that corrects the observed image points x₁, x₂ to x̂₁, x̂₂ satisfying the epipolar constraint x̂₂ᵀFx̂₁ = 0 exactly, then applies linear DLT. This is essentially optimal and costs only a few matrix operations — a big improvement over iterative methods.</p>
+
+                        <h2>6. Degenerate Configurations</h2>
+                        <p>Triangulation fails or becomes highly inaccurate in several configurations:</p>
+                        <ul>
+                            <li><strong>Forward motion:</strong> both cameras moving along the same ray as the observed point. Rays are nearly parallel — depth poorly constrained.</li>
+                            <li><strong>Pure rotation:</strong> no baseline — no triangulation possible.</li>
+                            <li><strong>Far-away points:</strong> small parallax → near-parallel rays → high depth uncertainty.</li>
+                            <li><strong>Wide baseline:</strong> more parallax is better for depth precision, but increases the risk of descriptor mismatch.</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>Depth Uncertainty vs Distance</strong>
+                            Depth uncertainty grows quadratically with distance: σ_Z ∝ Z² / (f · B). At twice the range, depth uncertainty is four times worse. In visual odometry systems, landmarks beyond a certain distance are often treated as "infinite" (direction only, no depth) to avoid adding noisy depth estimates into the map.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-slam-epipolar.html">Epipolar Geometry</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-slam-bundle-adjustment.html">Bundle Adjustment</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li class="active"><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Triangulation</a></li>
+                                <li><a href="#">3D Reconstruction</a></li>
+                                <li><a href="#">Reprojection Error</a></li>
+                                <li><a href="#">Visual Odometry</a></li>
+                                <li><a href="#">DLT</a></li>
+                                <li><a href="#">SfM</a></li>
+                                <li><a href="#">Depth Uncertainty</a></li>
+                                <li><a href="#">Ray Intersection</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

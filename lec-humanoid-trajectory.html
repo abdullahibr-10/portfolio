@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Trajectory Generation &amp; Optimization — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Humanoid Robotics</p>
+                    <h2>Trajectory Generation &amp; Optimization</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-humanoid-trajectory.html">Trajectory Generation</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Humanoid Robotics · Lec 06</span>
+                        <h1>Trajectory Generation &amp; Optimization</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Nov 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>A motion planner outputs a geometric path — a sequence of configurations. A trajectory generator converts this into a time-parameterised function q(t) that the joint controllers can follow, respecting velocity, acceleration, and jerk limits. Good trajectory design produces smooth, natural-looking motion that minimises mechanical wear and follows the dynamics of the robot.</p>
+
+                        <h2>1. Path vs Trajectory</h2>
+                        <p>A <strong>path</strong> is a geometric curve in configuration space C: a mapping from a parameter s ∈ [0, 1] to q(s) ∈ C. It specifies shape (waypoints, shapes of curves) but not timing. A <strong>trajectory</strong> is a path with a time parameterisation: q(t) = q(s(t)) where s(t) is a monotonically increasing function mapping time to path parameter. The trajectory determines the velocities q̇(t) and accelerations q̈(t) at each joint.</p>
+
+                        <h2>2. Polynomial Trajectories</h2>
+                        <p>The simplest trajectories are polynomials in time. Given boundary conditions at t=0 and t=T:</p>
+                        <ul>
+                            <li><strong>Cubic (3rd order):</strong> 4 boundary conditions — q(0), q̇(0), q(T), q̇(T). Continuous in position and velocity. Solve the 4×4 linear system for polynomial coefficients [a₀, a₁, a₂, a₃].</li>
+                            <li><strong>Quintic (5th order):</strong> 6 boundary conditions — add q̈(0) and q̈(T). Continuous in position, velocity, and acceleration. Essential when acceleration continuity matters (smooth force profiles).</li>
+                        </ul>
+                        <p>Setting q̇(0) = q̇(T) = 0 and q̈(0) = q̈(T) = 0 gives a quintic trajectory starting and ending at rest — smooth and safe for slow manipulation tasks.</p>
+
+                        <h2>3. Minimum Jerk Trajectory</h2>
+                        <p>Minimising the integral of squared jerk (∫(d³q/dt³)² dt) subject to position boundary conditions gives the <strong>minimum jerk trajectory</strong>. Hogan (1984) showed that humans reach-to-grasp motions minimise jerk, giving "natural" smooth bell-shaped velocity profiles. The closed-form solution for q(0) = q₀, q(T) = q_f, with zero boundary velocities and accelerations:</p>
+
+                        <div class="math_block">
+                            q(t) = q₀ + (q_f − q₀) · [10τ³ − 15τ⁴ + 6τ⁵]  where τ = t/T
+                        </div>
+
+                        <p>The velocity profile is a smooth bell shape: q̇ peaks at t = T/2. Jerk is zero at t=0 and t=T. This profile is widely used in humanoid manipulation for natural, human-like arm motions.</p>
+
+                        <h2>4. Via Points and Splines</h2>
+                        <p>When multiple waypoints {q₀, q₁, ..., qₙ} must be passed through, the trajectory is split into segments. A <strong>natural cubic spline</strong> fits a cubic polynomial to each segment, with the constraint that position, velocity, and acceleration are continuous at each interior waypoint. The resulting system of equations is tridiagonal and solved in O(n) time.</p>
+                        <p><strong>Blending:</strong> rather than passing exactly through via points (which requires stopping), use parabolic blends (trapezoidal velocity profiles with smooth quadratic corners) or cubic blends to pass through waypoints at non-zero velocity. This trades exact waypoint passing for smooth continuous motion.</p>
+
+                        <h2>5. Time Parameterisation with Dynamic Constraints</h2>
+                        <p>Given a path q(s), find s(t) that maximises speed while respecting joint velocity limits |q̇ᵢ| ≤ v_max_i and acceleration limits |q̈ᵢ| ≤ a_max_i. This is the <strong>time-optimal path parameterisation (TOPP)</strong> problem. TOPP algorithms find the minimum-time traversal of a given path, producing bang-bang acceleration profiles at the velocity limits. MoveIt2's time-parameterisation step uses TOPP-RA (TOPP with Reachability Analysis), which runs in milliseconds.</p>
+
+                        <h2>6. Trajectory Optimization</h2>
+                        <p>Gradient-based trajectory optimisation directly minimises a cost function over the trajectory. CHOMP (Covariant Hamiltonian Optimisation for Motion Planning) uses a cost of the form:</p>
+
+                        <div class="math_block">
+                            C(q) = λ_smooth · ∫||q̈||² dt  +  λ_obs · ∫ c_obs(q(t)) dt
+                        </div>
+
+                        <p>where c_obs is a penalty based on the signed distance field. Gradient descent (with preconditioning) jointly minimises smoothness and obstacle avoidance. Unlike RRT, CHOMP refines the path to be dynamically smooth and obstacle-clear — ideal for dense environments where RRT finds jerky paths. GPMP2 extends this framework with Gaussian Process motion priors.</p>
+
+                        <div class="note_box">
+                            <strong>Minimum Jerk in Practice</strong>
+                            The minimum jerk profile is implemented in the G1 lab using ROS2: generate a quintic trajectory using the 5th-order polynomial above, publish as a <code>trajectory_msgs/JointTrajectory</code> with correctly spaced timestamps, and pass to the robot controller. Position, velocity, and acceleration must all be specified at each waypoint for a smooth controller response.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-humanoid-motion-planning.html">Motion Planning for Manipulation</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-humanoid-grasping.html">Grasping &amp; Pushing</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Humanoid Robotics</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-humanoid-intro.html">01 — Intro &amp; Perception Basics</a></li>
+                                <li><a href="lec-humanoid-3d-world.html">02 — 3D World Representations</a></li>
+                                <li><a href="lec-humanoid-active-perception.html">03 — Active Perception</a></li>
+                                <li><a href="lec-humanoid-manipulation-fundamentals.html">04 — Fundamentals of Manipulation</a></li>
+                                <li><a href="lec-humanoid-motion-planning.html">05 — Motion Planning for Manipulation</a></li>
+                                <li class="active"><a href="lec-humanoid-trajectory.html">06 — Trajectory Generation &amp; Optimization</a></li>
+                                <li><a href="lec-humanoid-grasping.html">07 — Grasping &amp; Pushing</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Minimum Jerk</a></li>
+                                <li><a href="#">Cubic Splines</a></li>
+                                <li><a href="#">CHOMP</a></li>
+                                <li><a href="#">TOPP</a></li>
+                                <li><a href="#">Trajectory Optimization</a></li>
+                                <li><a href="#">Polynomial Trajectories</a></li>
+                                <li><a href="#">Via Points</a></li>
+                                <li><a href="#">Dynamics</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

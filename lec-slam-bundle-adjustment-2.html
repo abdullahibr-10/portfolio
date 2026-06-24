@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Bundle Adjustment II — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Graph SLAM</p>
+                    <h2>Bundle Adjustment II</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-slam-bundle-adjustment-2.html">Bundle Adjustment II</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 08</span>
+                        <h1>Bundle Adjustment II</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>This lecture continues Bundle Adjustment with the practical aspects that make it work in real systems: gauge freedom, robust loss functions, incremental vs global strategies, and the Ceres Solver library that powers state-of-the-art SfM systems including COLMAP.</p>
+
+                        <h2>1. Gauge Freedom</h2>
+                        <p>The 3D reconstruction is defined only up to a 7-DOF similarity transform (3 translation, 3 rotation, 1 scale) — the "gauge." Any rigid-body transformation + rescaling of the entire scene plus cameras leaves all reprojection errors unchanged. This means the JᵀJ information matrix is rank-deficient (has a 7-dimensional null space), and the normal equations cannot be solved directly.</p>
+                        <p>Three strategies to fix the gauge:</p>
+                        <ul>
+                            <li><strong>Fix the first camera:</strong> set P₁ = K[I|0], removing 6 DOF. Fix scale by setting ||t₂|| = 1.</li>
+                            <li><strong>Fix two cameras completely:</strong> removes 12 DOF (overconstrained by 5, but removes gauge).</li>
+                            <li><strong>Gauge penalty:</strong> add soft constraints penalising deviation from a reference pose — useful in incremental BA where fixing early cameras completely might degrade accuracy.</li>
+                        </ul>
+
+                        <h2>2. Robust Loss Functions</h2>
+                        <p>Standard squared reprojection error is very sensitive to outliers (wrong feature matches). A single bad match can corrupt many camera estimates. Replace the squared loss with a robust function ρ(r²) that down-weights large residuals:</p>
+                        <ul>
+                            <li><strong>Huber loss:</strong> ρ(r) = r² if |r| ≤ δ, else 2δ|r| − δ². Quadratic for small residuals, linear for large ones. Outliers contribute linearly rather than quadratically.</li>
+                            <li><strong>Cauchy loss:</strong> ρ(r) = log(1 + r²/σ²). Provides stronger down-weighting of large residuals — effectively ignores points with reprojection error much larger than σ.</li>
+                        </ul>
+                        <p>These are implemented as Iteratively Reweighted Least Squares (IRLS): at each LM step, compute per-residual weights w(rᵢ) = ρ'(rᵢ²) / rᵢ and solve the weighted normal equations. Ceres Solver implements this transparently with its <code>LossFunction</code> interface.</p>
+
+                        <h2>3. Incremental vs Global Bundle Adjustment</h2>
+                        <p><strong>Incremental BA</strong> (used in COLMAP) adds cameras one or a few at a time. After each addition, run local BA on a sliding window of recent cameras and their visible points. Periodically run global BA over the full reconstruction. This is efficient and robust — errors are caught early before they propagate. The key challenge is avoiding drift over long sequences.</p>
+                        <p><strong>Global BA</strong> optimises all cameras and points simultaneously. Yields the most accurate result but costs O(N³) in the number of cameras. Only practical for moderate-size reconstructions (hundreds of cameras) or with efficient iterative linear solvers.</p>
+
+                        <h2>4. Ceres Solver</h2>
+                        <p>Ceres (Agarwal et al., Google) is the industrial-standard library for BA. Key features:</p>
+                        <ul>
+                            <li><strong>Automatic differentiation:</strong> Ceres computes Jacobians automatically using dual numbers, eliminating hand-derivation of analytic Jacobians (though user-provided Jacobians are supported and faster).</li>
+                            <li><strong>Schur complement backend:</strong> the <code>DENSE_SCHUR</code> and <code>SPARSE_SCHUR</code> linear solvers implement the Schur complement trick automatically.</li>
+                            <li><strong>Iterative solvers:</strong> Conjugate Gradient (CG) with Jacobi or cluster Jacobi preconditioners scale to millions of points.</li>
+                            <li><strong>Robust kernels:</strong> built-in Huber, Cauchy, Arctan, and custom loss functions.</li>
+                        </ul>
+
+                        <h2>5. COLMAP</h2>
+                        <p>COLMAP (Schönberger &amp; Frahm, 2016) is the state-of-the-art open-source SfM pipeline. It uses: SIFT features + GPU descriptor extraction, exhaustive/vocabulary-tree matching, geometric verification via RANSAC, incremental reconstruction, and Ceres-based BA. On large photo collections it produces dense reconstructions via MVS (Multi-View Stereo) as a second stage. It is the standard baseline comparison for any new SfM or visual SLAM method.</p>
+
+                        <div class="note_box">
+                            <strong>COLMAP on the Lab Machines</strong>
+                            COLMAP is installed on the lab machines at UniBonn. To reconstruct a scene from a folder of images: <code>colmap automatic_reconstructor --workspace_path /path/to/ws --image_path /path/to/imgs</code>. The sparse model can be visualised in the COLMAP GUI or exported for further processing.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-slam-bundle-adjustment.html">Bundle Adjustment</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-slam-features-keypoints.html">Features: Keypoints</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li class="active"><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Gauge Freedom</a></li>
+                                <li><a href="#">Robust Loss</a></li>
+                                <li><a href="#">COLMAP</a></li>
+                                <li><a href="#">Ceres Solver</a></li>
+                                <li><a href="#">Incremental SfM</a></li>
+                                <li><a href="#">Huber Loss</a></li>
+                                <li><a href="#">Outlier Rejection</a></li>
+                                <li><a href="#">IRLS</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

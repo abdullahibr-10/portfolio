@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Ensemble Learning — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">ML for Robotics &amp; Computer Vision</p>
+                    <h2>Ensemble Learning</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-mlrcv-ensemble.html">Ensemble Learning</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">ML for Robotics &amp; Computer Vision · Lec 04</span>
+                        <h1>Ensemble Learning</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Ensemble methods combine multiple weak learners into a single strong predictor. They are among the most practically effective tools in classical machine learning — Random Forests and Gradient Boosted Trees consistently top structured-data benchmarks and have clear applications in robotics for terrain classification, sensor anomaly detection, and multi-modal fusion.</p>
+
+                        <h2>1. Decision Trees</h2>
+                        <p>A decision tree recursively partitions the feature space by axis-aligned splits. At each node, the algorithm selects the feature and threshold that maximally reduces impurity. For classification, the most common impurity measures are:</p>
+                        <ul>
+                            <li><strong>Gini impurity:</strong> G = 1 − Σₖ pₖ². Zero for a pure node (all one class), maximum at 0.5 for binary equal-split.</li>
+                            <li><strong>Information gain:</strong> reduction in Shannon entropy H = −Σₖ pₖ log pₖ after the split.</li>
+                        </ul>
+                        <p>Deep trees memorise training data (high variance). Pruning via maximum depth or minimum samples per leaf controls this. Even with pruning, single trees are fragile — small data changes can yield very different trees.</p>
+
+                        <h2>2. Bagging</h2>
+                        <p>Bootstrap AGGregatING (Bagging) trains T classifiers on independently drawn bootstrap samples (sample n points with replacement from the training set). Final prediction is a majority vote (classification) or average (regression) over all T models. Why it works: individual models have high variance but low correlation. Averaging T uncorrelated predictors reduces variance by factor T while leaving bias unchanged.</p>
+
+                        <h2>3. Random Forests</h2>
+                        <p>Random Forests add one more layer of randomisation to bagging: at each node split, only a random subset of m &lt; n features is considered as split candidates. Typically m ≈ √n (classification) or m ≈ n/3 (regression). This <em>decorrelates</em> the trees further — trees cannot all rely on the same dominant feature, so the ensemble is more diverse. The result is a robust, fast, and often surprisingly accurate classifier that requires little tuning beyond the number of trees T.</p>
+
+                        <div class="note_box">
+                            <strong>Feature Importance</strong>
+                            Random Forests produce a natural feature importance score: for each feature, sum the weighted impurity decrease across all splits on that feature across all trees. This is valuable in robotics for understanding which sensor channels drive a classification decision.
+                        </div>
+
+                        <h2>4. AdaBoost</h2>
+                        <p>Boosting builds an ensemble <em>sequentially</em>, each new model focusing on examples the previous models got wrong. AdaBoost maintains a weight wᵢ on each training example (initially uniform). At each round t:</p>
+                        <ol>
+                            <li>Train a weak learner hₜ on the weighted dataset.</li>
+                            <li>Compute weighted error εₜ = Σᵢ wᵢ · 1[hₜ(xᵢ) ≠ yᵢ].</li>
+                            <li>Compute learner weight: αₜ = 0.5 · ln((1 − εₜ) / εₜ). Correct learners (εₜ &lt; 0.5) get positive weight; worse than random gets negative weight.</li>
+                            <li>Update sample weights: increase weight for misclassified examples, decrease for correct ones. Renormalise.</li>
+                        </ol>
+                        <p>Final prediction: H(x) = sign(Σₜ αₜ hₜ(x)).</p>
+
+                        <h2>5. Gradient Boosting</h2>
+                        <p>Gradient Boosted Decision Trees (GBDT) fit each new tree to the <strong>pseudo-residuals</strong> — the negative gradient of the loss with respect to current model predictions. For MSE loss, pseudo-residuals equal the actual residuals rᵢ = yᵢ − F(xᵢ). A new tree hₜ is fitted to predict these residuals, then added: F_{t}(x) = F_{t-1}(x) + ν · hₜ(x), where ν is a shrinkage factor (learning rate, typically 0.01–0.1). This generalises to any differentiable loss function — log-loss for classification, quantile loss for interval prediction.</p>
+                        <p><strong>XGBoost</strong> adds regularisation on tree weights, second-order gradient information (Newton step), and column/row subsampling to GBDT, making it significantly faster and more regularised than naive GBDT.</p>
+
+                        <h2>6. Ensemble Methods in Robotics</h2>
+                        <p>Practical applications where ensemble methods shine:</p>
+                        <ul>
+                            <li><strong>Sensor fusion:</strong> combine outputs from camera, LiDAR, and IMU classifiers with a Random Forest meta-classifier trained on their confidences.</li>
+                            <li><strong>Terrain classification:</strong> haptic, visual, and proprioceptive features combined with GBDT to predict slipperiness or slope.</li>
+                            <li><strong>Anomaly detection:</strong> Isolation Forest (a variant where trees isolate outliers faster) for detecting unusual sensor readings in manufacturing robots.</li>
+                        </ul>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-mlrcv-unsupervised.html">Unsupervised Learning</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-mlrcv-ml-cv-tasks.html">ML for CV Tasks</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">ML for Robotics &amp; CV</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-mlrcv-regression.html">01 — Regression</a></li>
+                                <li><a href="lec-mlrcv-classification.html">02 — Classification</a></li>
+                                <li><a href="lec-mlrcv-unsupervised.html">03 — Unsupervised Learning</a></li>
+                                <li class="active"><a href="lec-mlrcv-ensemble.html">04 — Ensemble Learning</a></li>
+                                <li><a href="lec-mlrcv-ml-cv-tasks.html">05 — ML for CV Tasks</a></li>
+                                <li><a href="lec-mlrcv-intro-cnns.html">06 — Introduction to CNNs</a></li>
+                                <li><a href="lec-mlrcv-learning-cnns.html">07 — Learning CNNs</a></li>
+                                <li><a href="lec-mlrcv-building-cnns.html">08 — Building CNNs</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Random Forest</a></li>
+                                <li><a href="#">Gradient Boosting</a></li>
+                                <li><a href="#">AdaBoost</a></li>
+                                <li><a href="#">Bagging</a></li>
+                                <li><a href="#">Decision Trees</a></li>
+                                <li><a href="#">XGBoost</a></li>
+                                <li><a href="#">Feature Importance</a></li>
+                                <li><a href="#">Bias-Variance</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

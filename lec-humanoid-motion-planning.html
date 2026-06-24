@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Motion Planning for Manipulation — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Humanoid Robotics</p>
+                    <h2>Motion Planning for Manipulation</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-humanoid-motion-planning.html">Motion Planning</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Humanoid Robotics · Lec 05</span>
+                        <h1>Motion Planning for Manipulation</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Nov 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Motion planning finds a collision-free trajectory from start to goal configuration, respecting kinematic constraints, joint limits, and task constraints (e.g., keep the end-effector upright). For humanoid manipulation, the planning space includes the arm joints (7+ DOF), must avoid the environment and the robot's own body, and must respect task-space constraints.</p>
+
+                        <h2>1. Joint Space vs Task Space Planning</h2>
+                        <p><strong>Joint space planning</strong> searches directly in the space of joint angles q ∈ ℝⁿ. Collision checking is straightforward using forward kinematics (FK) to compute link poses. The main challenge: the relationship between joint configuration and end-effector pose is non-linear and non-intuitive — a straight line in joint space corresponds to a curved path in Cartesian space.</p>
+                        <p><strong>Task space (Cartesian) planning</strong> plans the end-effector trajectory x(t) ∈ SE(3) directly. Intuitive for specifying constraints (approach direction, grasp pose). Requires Inverse Kinematics (IK) to convert Cartesian poses to joint configurations, which can fail at singularities or when the pose is outside the reachable workspace.</p>
+
+                        <h2>2. Inverse Kinematics</h2>
+                        <p>IK solves: given desired end-effector pose T_ee ∈ SE(3), find joint angles q such that FK(q) = T_ee. For chains with 6 DOF and a spherical wrist (last 3 joints intersect at a point), analytical IK solutions exist in closed form — fast and complete. The G1's arms are 7-DOF (redundant), so there is a family of solutions parameterised by the null space.</p>
+                        <p><strong>Numerical IK</strong> uses the Jacobian pseudoinverse: Δq = J⁺ Δx where J = ∂FK/∂q and J⁺ = Jᵀ(JJᵀ)⁻¹ is the pseudoinverse. Iterate until FK(q) is sufficiently close to T_ee. Near kinematic singularities (rank-deficient J), use <strong>damped least squares</strong>: J⁺_damped = Jᵀ(JJᵀ + λI)⁻¹, which bounds joint velocities at the cost of approximate tracking.</p>
+
+                        <h2>3. Redundancy Resolution</h2>
+                        <p>A 7-DOF arm has one extra DOF beyond the 6 required to position and orient the end-effector. This redundancy is resolved using <strong>null-space projection</strong>:</p>
+
+                        <div class="math_block">
+                            q̇ = J⁺ ẋ + (I − J⁺J) ż
+                        </div>
+
+                        <p>The first term tracks the end-effector trajectory. The second term projects a secondary velocity ż = ∂g/∂q (gradient of a secondary objective g, e.g., joint limit avoidance, elbow position) into the null space of J — it affects joint motion without disturbing the end-effector pose. This allows the extra DOF to be used for obstacle avoidance, manipulability maximisation, or comfortable postures.</p>
+
+                        <h2>4. RRT for Manipulation</h2>
+                        <p>Rapidly-exploring Random Trees (RRT) sample the joint configuration space and grow a tree from the start configuration towards the goal. At each iteration: (1) sample a random q_rand; (2) find the nearest tree node q_near; (3) extend q_near towards q_rand by a step; (4) collision-check the new configuration; (5) add if collision-free. The goal is added when a sample is close enough.</p>
+                        <p><strong>BiRRT</strong> (bidirectional RRT) grows trees from both start and goal simultaneously and connects them when they are close. This is significantly faster in practice. <strong>RRT-Connect</strong> extends greedily towards the other tree's nearest node, often finding a solution in 10× fewer iterations than basic RRT.</p>
+
+                        <h2>5. Constrained Motion Planning</h2>
+                        <p>Manipulation tasks impose constraints that restrict the motion to a submanifold of the configuration space:</p>
+                        <ul>
+                            <li><strong>Equality constraints:</strong> keep end-effector horizontal (e.g., carrying a cup of water), maintain contact with a surface, follow a straight Cartesian path.</li>
+                            <li><strong>Inequality constraints:</strong> joint limits, collision avoidance, force limits.</li>
+                        </ul>
+                        <p>Handling equality constraints during RRT sampling requires projection onto the constraint manifold after each random sample — iterative projection using the constraint Jacobian. Atlas-based planners maintain a set of local atlas charts of the constraint manifold and sample within them efficiently.</p>
+
+                        <h2>6. MoveIt2 in ROS2</h2>
+                        <p>MoveIt2 is the standard ROS2 manipulation planning framework. Key components:</p>
+                        <ul>
+                            <li><strong>OMPL planners:</strong> RRTConnect, RRT*, KPIECE, TRRT — configurable via parameters.</li>
+                            <li><strong>Planning scene:</strong> CollisionObjects added as primitive shapes or meshes, updated from sensor data.</li>
+                            <li><strong>Motion execution:</strong> FollowJointTrajectory action, compatible with ros2_control effort/position/velocity interfaces.</li>
+                            <li><strong>Constraint specification:</strong> position/orientation/joint constraints in the goal message.</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>Practical Planning Time</strong>
+                            RRT-based planners in MoveIt2 typically find solutions within 100–500 ms for a 7-DOF arm in a moderately cluttered environment. If planning takes longer than 1 second, suspect: poor collision mesh resolution (simplify!), too-tight constraints, or a near-singular start/goal configuration. Path shortcutting and smoothing are applied automatically post-planning.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-humanoid-manipulation-fundamentals.html">Fundamentals of Manipulation</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-humanoid-trajectory.html">Trajectory Generation &amp; Optimization</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Humanoid Robotics</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-humanoid-intro.html">01 — Intro &amp; Perception Basics</a></li>
+                                <li><a href="lec-humanoid-3d-world.html">02 — 3D World Representations</a></li>
+                                <li><a href="lec-humanoid-active-perception.html">03 — Active Perception</a></li>
+                                <li><a href="lec-humanoid-manipulation-fundamentals.html">04 — Fundamentals of Manipulation</a></li>
+                                <li class="active"><a href="lec-humanoid-motion-planning.html">05 — Motion Planning for Manipulation</a></li>
+                                <li><a href="lec-humanoid-trajectory.html">06 — Trajectory Generation &amp; Optimization</a></li>
+                                <li><a href="lec-humanoid-grasping.html">07 — Grasping &amp; Pushing</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">RRT</a></li>
+                                <li><a href="#">Inverse Kinematics</a></li>
+                                <li><a href="#">MoveIt2</a></li>
+                                <li><a href="#">Null Space</a></li>
+                                <li><a href="#">Redundancy</a></li>
+                                <li><a href="#">OMPL</a></li>
+                                <li><a href="#">Collision Avoidance</a></li>
+                                <li><a href="#">Motion Planning</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

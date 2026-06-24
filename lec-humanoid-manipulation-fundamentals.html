@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Fundamentals of Manipulation — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Humanoid Robotics</p>
+                    <h2>Fundamentals of Manipulation</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-humanoid-manipulation-fundamentals.html">Fundamentals of Manipulation</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Humanoid Robotics · Lec 04</span>
+                        <h1>Fundamentals of Manipulation</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Nov 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Manipulation — grasping, moving, and controlling objects through physical contact — is one of the central challenges in robotics. This lecture establishes the mechanical and mathematical foundations: how grasps are classified, how contact forces are modelled, and what it means for a grasp to be stable and useful.</p>
+
+                        <h2>1. Grasp Taxonomy</h2>
+                        <p>Napier (1956) introduced the distinction between <strong>precision grasps</strong> and <strong>power grasps</strong>:</p>
+                        <ul>
+                            <li><strong>Precision grasp:</strong> object held between fingertips with minimal palm involvement. Allows fine motor control and repositioning. Examples: pinch grip (coin, pen tip), three-fingered tripod (pen writing).</li>
+                            <li><strong>Power grasp:</strong> object enveloped by whole hand including palm. Maximises grip force and stability. Examples: cylindrical grip (hammer handle), spherical grip (ball).</li>
+                        </ul>
+                        <p>Cutkosky (1989) extended this into a 16-class taxonomy based on object geometry, size, and task requirements. This taxonomy is useful for matching object shape to appropriate hand configuration and is used in grasp dataset annotation.</p>
+
+                        <h2>2. Contact Models</h2>
+                        <p>How we model the force that a finger can exert at a contact point determines the grasp analysis approach:</p>
+                        <ul>
+                            <li><strong>Point Contact with Friction (PwF):</strong> simplest model. The contact can exert a force in any direction within the friction cone (half-angle arctan(μ), where μ is the Coulomb friction coefficient). No moment about the contact normal.</li>
+                            <li><strong>Soft Finger (SF):</strong> like PwF but also allows a moment about the contact normal (torsional friction). Models soft fingertip pads. Generates a wrench cone instead of a force cone.</li>
+                            <li><strong>Hard Finger (HF):</strong> frictionless point contact — can only push, not pull, and only along the contact normal. Requires many contact points for stability.</li>
+                        </ul>
+
+                        <h2>3. Form Closure</h2>
+                        <p>A grasp achieves <strong>form closure</strong> if the object is geometrically immobilised — no motion is possible regardless of the forces applied, purely due to the geometry of the contacts (no friction required). Form closure requires contact points that span all 6 DOF of possible object motion (3 translation, 3 rotation) from all sides. This typically requires 7+ contacts for a general 3D object. Form closure is very conservative and rarely the target in practice.</p>
+
+                        <h2>4. Force Closure</h2>
+                        <p><strong>Force closure</strong> requires that the finger forces (lying within their respective friction cones) can resist any external wrench applied to the object. Formally, the grasp matrix G maps finger contact forces f to the resultant wrench w on the object: w = Gf. Force closure holds if the image of the friction cone polytope under G spans the 6D wrench space — i.e., any wrench can be balanced.</p>
+                        <p>Force closure is achievable with as few as 2 contacts (antipodal grasp with sufficient friction). It is necessary for a practically useful grasp — but not sufficient, since kinematics and approach direction must also be feasible.</p>
+
+                        <h2>5. Friction Cone</h2>
+                        <p>For a contact point with coefficient of friction μ, the permissible reaction force f must satisfy:</p>
+                        <div class="math_block">
+                            ||f_t|| ≤ μ · f_n
+                        </div>
+                        <p>where f_n is the normal component and f_t is the tangential component. This defines a cone with half-angle arctan(μ). For QP-based grasp optimisation, the friction cone is approximated by a polyhedral cone (4 or 8 linearised faces). The linearisation must be conservative (inner approximation) to guarantee feasibility.</p>
+
+                        <h2>6. Grasp Quality Metrics</h2>
+                        <p>Two standard metrics for evaluating grasp quality:</p>
+                        <ul>
+                            <li><strong>ε-metric (Ferrari-Canny):</strong> radius of the largest ball centred at the origin that fits inside the convex hull of friction cone face normals in wrench space. Measures the worst-case wrench the grasp can resist. Higher ε = more robust to perturbations.</li>
+                            <li><strong>v-metric:</strong> volume of the convex hull of friction cone primitives in wrench space. Measures overall grasp versatility — ability to handle a wide range of disturbance wrenches.</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>Force Closure is Necessary, Not Sufficient</strong>
+                            A force-closure grasp also needs: (1) kinematic reachability — the hand must be able to reach the contact points given joint limits and the approach direction; (2) no self-collision between fingers; (3) a feasible approach trajectory that does not collide with the object or environment; (4) compatibility with the robot's grasp planner and available hand DOF.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-humanoid-active-perception.html">Active Perception</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-humanoid-motion-planning.html">Motion Planning for Manipulation</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Humanoid Robotics</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-humanoid-intro.html">01 — Intro &amp; Perception Basics</a></li>
+                                <li><a href="lec-humanoid-3d-world.html">02 — 3D World Representations</a></li>
+                                <li><a href="lec-humanoid-active-perception.html">03 — Active Perception</a></li>
+                                <li class="active"><a href="lec-humanoid-manipulation-fundamentals.html">04 — Fundamentals of Manipulation</a></li>
+                                <li><a href="lec-humanoid-motion-planning.html">05 — Motion Planning for Manipulation</a></li>
+                                <li><a href="lec-humanoid-trajectory.html">06 — Trajectory Generation &amp; Optimization</a></li>
+                                <li><a href="lec-humanoid-grasping.html">07 — Grasping &amp; Pushing</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Grasping</a></li>
+                                <li><a href="#">Force Closure</a></li>
+                                <li><a href="#">Form Closure</a></li>
+                                <li><a href="#">Friction Cone</a></li>
+                                <li><a href="#">Grasp Quality</a></li>
+                                <li><a href="#">Contact Models</a></li>
+                                <li><a href="#">Wrench Space</a></li>
+                                <li><a href="#">Manipulation</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

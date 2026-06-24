@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Epipolar Geometry — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Graph SLAM</p>
+                    <h2>Epipolar Geometry</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-slam-epipolar.html">Epipolar Geometry</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 05</span>
+                        <h1>Epipolar Geometry</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Oct 2025</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+                        <p>Epipolar geometry is the projective geometry of two views. It describes how a 3D scene point, observed from two camera positions, creates a structured geometric relationship between the two corresponding image points. Understanding this structure is foundational to stereo vision, visual odometry, and Structure-from-Motion.</p>
+
+                        <h2>1. Epipoles</h2>
+                        <p>The <strong>epipole</strong> e in image 1 is the projection of camera centre C₂ into image 1. Similarly, the epipole e' in image 2 is the projection of C₁ into image 2. If the cameras face the same direction and are side by side (the standard stereo setup), the epipoles lie on the horizontal horizon at infinity. If one camera is behind the other (forward motion), the epipole is in the centre of the image — the "focus of expansion."</p>
+                        <p>Algebraically: Fe = 0 and Fᵀe' = 0 — the epipoles are the left and right null vectors of F. This means all epipolar lines pass through the epipole.</p>
+
+                        <h2>2. Epipolar Lines and Planes</h2>
+                        <p>The <strong>epipolar plane</strong> is the plane containing both camera centres C₁, C₂ and a 3D world point X. The intersection of this plane with each image is an <strong>epipolar line</strong>. Key facts:</p>
+                        <ul>
+                            <li>Every 3D point X along the ray from C₁ through image point x projects to a different point along the single epipolar line l' = Fx in image 2.</li>
+                            <li>Therefore, the correspondence of x must lie on l'. This reduces 2D correspondence search to a 1D search.</li>
+                            <li>All epipolar lines in image 1 pass through e, and all epipolar lines in image 2 pass through e'.</li>
+                        </ul>
+
+                        <h2>3. Stereo Rectification</h2>
+                        <p>The most powerful consequence of epipolar geometry is rectification: a pair of images can be warped so that all epipolar lines become <em>horizontal</em> and <em>co-linear</em> across the two images. After rectification, stereo matching becomes a 1D search: for each pixel in the left image, the corresponding pixel in the right image lies on the same row, just shifted horizontally (the disparity d = x_L − x_R is always positive for scenes in front of the cameras).</p>
+                        <p>Depth is then recovered as: Z = f · B / d, where f is the focal length, B is the stereo baseline (distance between cameras), and d is the disparity. Smaller disparity → larger depth. Objects far away have near-zero disparity and are hard to localise.</p>
+
+                        <h2>4. Rectification Algorithm (Hartley)</h2>
+                        <p>Given F and the two epipoles e, e', compute homographies H and H' that:</p>
+                        <ol>
+                            <li>Map the epipole e to a point at infinity on the horizontal axis (so all epipolar lines become horizontal).</li>
+                            <li>Minimise projective distortion in the image so rectified images look as close to the original as possible.</li>
+                            <li>Apply H to image 1 and H' to image 2.</li>
+                        </ol>
+                        <p>For a calibrated stereo rig with known extrinsics, the rectification homographies can be computed analytically (Bouguet's method in OpenCV: <code>stereoRectify()</code>). For uncalibrated stereo, Hartley's method computes them from F and the epipoles.</p>
+
+                        <h2>5. Dense Stereo Matching</h2>
+                        <p>After rectification, dense disparity estimation matches every pixel. Classic approaches:</p>
+                        <ul>
+                            <li><strong>Block matching (BM):</strong> for each left pixel, find the right pixel with minimum SAD (Sum of Absolute Differences) in a small window. Fast but noisy near edges and in textureless regions.</li>
+                            <li><strong>Semi-Global Matching (SGM):</strong> aggregates matching costs along multiple 1D paths using dynamic programming. Much smoother disparity maps. Used in OpenCV's <code>StereoSGBM</code>.</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>Depth Resolution</strong>
+                            The minimum detectable depth change is ΔZ ≈ Z² · Δd / (f · B), where Δd is the minimum measurable disparity change (1 pixel for integer matching). Depth uncertainty grows quadratically with range — doubling the distance multiplies depth noise by 4. A stereo camera with f=700px and B=12cm has ±1cm precision at 1m but only ±4cm at 2m.
+                        </div>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-slam-fund-essential-direct.html">Fundamental &amp; Essential Direct</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Next →</span>
+                                <a href="lec-slam-triangulation.html">Triangulation</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li class="active"><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">Epipoles</a></li>
+                                <li><a href="#">Epipolar Lines</a></li>
+                                <li><a href="#">Rectification</a></li>
+                                <li><a href="#">Stereo Vision</a></li>
+                                <li><a href="#">Disparity</a></li>
+                                <li><a href="#">Dense Matching</a></li>
+                                <li><a href="#">SGM</a></li>
+                                <li><a href="#">Depth Estimation</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>
