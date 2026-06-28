@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Graph-Based SLAM — MSc Notes</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="vendors/linericon/style.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/magnific-popup.css">
+    <link rel="stylesheet" href="vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-minimal.css">
+    <!-- MathJax -->
+    <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']],
+        packages: {'[+]': ['ams']}
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body class="blog_version">
+
+    <header class="header_area">
+        <div class="main_menu">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <div class="container">
+                    <a class="navbar-brand logo_h" href="index.html"><strong>Muhammad Abdullah</strong></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav menu_nav justify-content-end">
+                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#about">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#skills">Expertise</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
+                            <li class="nav-item active"><a class="nav-link" href="blog.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="banner_area">
+        <div class="banner_inner d-flex align-items-center">
+            <div class="container">
+                <div class="banner_content text-left">
+                    <p style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#888888; margin-bottom:10px;">Robot Mapping</p>
+                    <h2>Graph-Based SLAM</h2>
+                    <div class="page_link">
+                        <a href="index.html">Home</a>
+                        <a href="blog.html">Notes</a>
+                        <a href="lec-robmap-graph-slam.html">Graph-Based SLAM</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="post_content_wrapper">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-lg-8">
+                    <div class="post_header">
+                        <span class="post_course_tag">Graph SLAM · Lec 13</span>
+                        <h1>Graph-Based SLAM</h1>
+                        <div class="post_meta">
+                            <span><i class="lnr lnr-calendar-full"></i>Jun 2026</span>
+                            <span><i class="lnr lnr-book"></i>MSc Mobile Robotics, UniBonn</span>
+                        </div>
+                    </div>
+
+                    <div class="post_body">
+
+                        <p>
+                            SLAM — Simultaneous Localization and Mapping — is the problem of building a consistent map of an unknown environment while at the same time estimating where the robot is within it. Neither task can be done cleanly in isolation: accurate mapping requires knowing the pose, and accurate localization requires knowing the map. Three classical paradigms exist to handle this chicken-and-egg problem: Kalman filter approaches (EKF-SLAM), particle filter approaches (FastSLAM), and the graph-based least-squares approach. This lecture, based on the Robot Mapping course by Prof. Cyrill Stachniss at the University of Bonn, develops the third paradigm from scratch.
+                        </p>
+                        <p>
+                            The graph-based approach has become the dominant framework in modern SLAM systems — it is the backbone of tools like g2o, GTSAM, and Ceres-based pipelines. Understanding it well means understanding how robots like autonomous cars and inspection drones actually build and correct their maps.
+                        </p>
+
+                        <h2>1. The Core Idea</h2>
+                        <p>
+                            The central insight of graph-based SLAM is to separate the problem into two stages: a <strong>front-end</strong> that constructs a graph from sensor data, and a <strong>back-end</strong> that optimizes the graph to find the most consistent set of robot poses. This lecture focuses entirely on the back-end.
+                        </p>
+                        <p>
+                            The graph encodes the history of the robot's motion. Each <strong>node</strong> \(\mathbf{x}_i\) represents a pose of the robot at time \(t_i\) — in 2D this is \((x, y, \theta)\), in 3D it is a 6-DOF rigid body pose. Each <strong>edge</strong> between nodes \(\mathbf{x}_i\) and \(\mathbf{x}_j\) represents a spatial constraint: a measurement that tells us something about the relative pose of \(\mathbf{x}_j\) as seen from \(\mathbf{x}_i\). Edges are inherently uncertain, so each one also carries an <strong>information matrix</strong> \(\mathbf{\Lambda}_{ij}\) (the inverse covariance) that encodes how much to trust it. The goal of the back-end is then clear: find the configuration of all nodes that best satisfies all the constraints simultaneously, in the weighted least-squares sense.
+                        </p>
+
+                        <h2>2. How Edges Are Created</h2>
+                        <p>
+                            Two types of sensor events produce edges.
+                        </p>
+                        <p>
+                            <strong>Odometry edges</strong> arise whenever the robot moves from \(\mathbf{x}_i\) to \(\mathbf{x}_{i+1}\). The wheel encoders or IMU give a noisy estimate of the relative displacement. This becomes an edge between consecutive nodes and forms the backbone of the trajectory graph.
+                        </p>
+                        <p>
+                            <strong>Loop closure edges</strong> arise when the robot observes a part of the environment it has already seen from a different position. By running scan matching between the two observations, we obtain a virtual measurement of the relative pose between the two non-consecutive nodes \(\mathbf{x}_i\) and \(\mathbf{x}_j\). These long-range edges are what allow the system to correct accumulated drift over time — without them, odometry errors compound into an increasingly distorted map. Identifying which pairs of poses observe the same place is the <em>data association</em> problem and is one of the hardest parts of robust SLAM.
+                        </p>
+
+                        <h2>3. The Error Function</h2>
+                        <p>
+                            We represent poses as homogeneous transformation matrices. Let \(\mathbf{X}_i\) denote the matrix that maps a point from the frame of node \(i\) to the world frame. The relative transformation from node \(i\) to node \(j\), as predicted by the current graph, is \(\mathbf{X}_i^{-1}\mathbf{X}_j\).
+                        </p>
+                        <p>
+                            The measurement on edge \((i,j)\) is \(\mathbf{Z}_{ij}\), the observed relative transformation. The edge is perfectly satisfied when the measured transform equals the predicted one: \(\mathbf{Z}_{ij} = \mathbf{X}_i^{-1}\mathbf{X}_j\). The discrepancy between measurement and prediction is the <strong>error</strong> for this edge:
+                        </p>
+                        \[
+                            \mathbf{e}_{ij}(\mathbf{x}_i, \mathbf{x}_j) = \mathrm{t2v}\!\left(\mathbf{Z}_{ij}^{-1}\,(\mathbf{X}_i^{-1}\mathbf{X}_j)\right)
+                        \]
+                        <p>
+                            The function \(\mathrm{t2v}(\cdot)\) (transform-to-vector) converts a homogeneous matrix to the corresponding minimal vector \((\Delta x, \Delta y, \Delta\theta)\) in 2D. When the constraint is perfectly satisfied, \(\mathbf{Z}_{ij}^{-1}(\mathbf{X}_i^{-1}\mathbf{X}_j) = \mathbf{I}\) and the error is zero. Otherwise it measures how far the current poses are from satisfying this constraint.
+                        </p>
+                        <p>
+                            The global objective is to minimize the sum of all weighted squared errors:
+                        </p>
+                        \[
+                            \mathbf{x}^* = \arg\min_{\mathbf{x}} \sum_{(i,j)\in\mathcal{E}} \mathbf{e}_{ij}^\top\,\mathbf{\Lambda}_{ij}\,\mathbf{e}_{ij}
+                        \]
+                        <p>
+                            The state vector \(\mathbf{x} = (\mathbf{x}_1^\top\; \mathbf{x}_2^\top\;\cdots\;\mathbf{x}_n^\top)^\top\) stacks the poses of all \(n\) nodes. Each edge contributes to this sum weighted by its information matrix — a high-quality scan match produces a large \(\mathbf{\Lambda}_{ij}\), making that constraint dominate; a poor odometry estimate in a featureless corridor produces a small one.
+                        </p>
+
+                        <h2>4. Gauss-Newton Optimization</h2>
+                        <p>
+                            The error function is nonlinear in the poses, so we cannot solve it in closed form. We use the <strong>Gauss-Newton</strong> method: iteratively linearize, solve a linear system, and update the estimate. The steps are:
+                        </p>
+                        <ol>
+                            <li>Linearize each error function around the current estimate \(\mathbf{x}\).</li>
+                            <li>Construct the linear coefficient system \(\mathbf{H}\Delta\mathbf{x} = -\mathbf{b}\).</li>
+                            <li>Solve for the increment \(\Delta\mathbf{x}\) and update \(\mathbf{x} \leftarrow \mathbf{x} + \Delta\mathbf{x}\).</li>
+                            <li>Repeat until convergence.</li>
+                        </ol>
+
+                        <h3>4.1 Linearizing the Error</h3>
+                        <p>
+                            Taylor-expanding each error term to first order:
+                        </p>
+                        \[
+                            \mathbf{e}_{ij}(\mathbf{x} + \Delta\mathbf{x}) \approx \mathbf{e}_{ij}(\mathbf{x}) + \mathbf{J}_{ij}\,\Delta\mathbf{x}
+                        \]
+                        <p>
+                            where \(\mathbf{J}_{ij} = \partial\mathbf{e}_{ij}/\partial\mathbf{x}\) is the Jacobian of the error with respect to the full state vector. A key structural observation: \(\mathbf{e}_{ij}\) depends only on \(\mathbf{x}_i\) and \(\mathbf{x}_j\), not on any other node's pose. Therefore \(\mathbf{J}_{ij}\) is zero everywhere except in the columns corresponding to \(\mathbf{x}_i\) and \(\mathbf{x}_j\):
+                        </p>
+                        \[
+                            \mathbf{J}_{ij} = \begin{pmatrix} \mathbf{0} & \cdots & \underbrace{\dfrac{\partial\mathbf{e}}{\partial\mathbf{x}_i}}_{\mathbf{A}_{ij}} & \cdots & \underbrace{\dfrac{\partial\mathbf{e}}{\partial\mathbf{x}_j}}_{\mathbf{B}_{ij}} & \cdots & \mathbf{0} \end{pmatrix}
+                        \]
+
+                        <h3>4.2 Building the Linear System</h3>
+                        <p>
+                            Substituting the linearized errors into the objective and minimizing over \(\Delta\mathbf{x}\) yields the normal equations \(\mathbf{H}\Delta\mathbf{x} = -\mathbf{b}\), where:
+                        </p>
+                        \[
+                            \mathbf{H} = \sum_{ij} \mathbf{J}_{ij}^\top\,\mathbf{\Lambda}_{ij}\,\mathbf{J}_{ij}, \qquad
+                            \mathbf{b} = \sum_{ij} \mathbf{J}_{ij}^\top\,\mathbf{\Lambda}_{ij}\,\mathbf{e}_{ij}
+                        \]
+                        <p>
+                            For a single edge \((i,j)\), expanding the product \(\mathbf{J}_{ij}^\top\mathbf{\Lambda}_{ij}\mathbf{J}_{ij}\) gives a block matrix that is nonzero only in the \((i,i)\), \((j,j)\), \((i,j)\), and \((j,i)\) blocks:
+                        </p>
+                        \[
+                            \mathbf{H}_{ij} = \begin{pmatrix} \mathbf{A}_{ij}^\top\mathbf{\Lambda}_{ij}\mathbf{A}_{ij} & \mathbf{A}_{ij}^\top\mathbf{\Lambda}_{ij}\mathbf{B}_{ij} \\ \mathbf{B}_{ij}^\top\mathbf{\Lambda}_{ij}\mathbf{A}_{ij} & \mathbf{B}_{ij}^\top\mathbf{\Lambda}_{ij}\mathbf{B}_{ij} \end{pmatrix}
+                        \]
+                        <p>
+                            Similarly, only blocks \(i\) and \(j\) of \(\mathbf{b}_{ij}\) are nonzero. This means the linear system can be built efficiently: iterate over edges, compute the four block contributions per edge, and accumulate into \(\mathbf{H}\) and \(\mathbf{b}\).
+                        </p>
+
+                        <h3>4.3 Sparsity</h3>
+                        <p>
+                            The accumulated matrix \(\mathbf{H}\) is sparse — its sparsity pattern mirrors the adjacency structure of the pose graph. In a typical robot trajectory, each pose is connected to only a handful of others (its odometry neighbours and a few loop closures), so \(\mathbf{H}\) has far fewer nonzero entries than a dense \(n \times n\) matrix. This enables the use of sparse linear solvers such as sparse Cholesky decomposition or conjugate gradients, making graph SLAM scalable to maps with thousands or tens of thousands of nodes.
+                        </p>
+
+                        <h2>5. Gauge Freedom and the Rank Deficiency of H</h2>
+                        <p>
+                            Before we can solve \(\mathbf{H}\Delta\mathbf{x} = -\mathbf{b}\), there is a fundamental problem: \(\mathbf{H}\) is <em>not</em> full rank. Every constraint in the graph is a relative constraint between two poses. Given any valid solution, we can rigidly translate and rotate the entire map — shifting all poses by the same global transformation — and the cost does not change. The system has no notion of where the map is in the world. This is called <strong>gauge freedom</strong>.
+                        </p>
+                        <p>
+                            The fix is simple: fix one node (typically the first pose) by removing its rows and columns from \(\mathbf{H}\) and \(\mathbf{b}\). This anchors the global reference frame and makes the reduced system full rank. The choice of anchor does not affect the relative geometry of the optimized map; it only sets the absolute reference.
+                        </p>
+
+                        <h2>6. A Worked 1D Example</h2>
+                        <p>
+                            Nothing makes the algebra clearer than a concrete example. Consider the simplest possible graph: two nodes and one edge, all in 1D.
+                        </p>
+
+                        <h3>Setup</h3>
+                        <ul>
+                            <li>Poses: \(x_1 = 0\), \(x_2 = 0\) (initial guess)</li>
+                            <li>Measurement: \(z_{12} = 1\) (we believe \(x_2\) is 1 unit to the right of \(x_1\))</li>
+                            <li>Information: \(\Lambda = 2\)</li>
+                        </ul>
+                        <p>In 1D the error for the single edge is simply:</p>
+                        \[
+                            e_{12} = z_{12} - (x_2 - x_1) = 1 - (0 - 0) = 1
+                        \]
+                        <p>The Jacobian is a row vector — the partial derivatives of \(e_{12}\) with respect to each variable:</p>
+                        \[
+                            J_{12} = \begin{pmatrix} \dfrac{\partial e}{\partial x_1} & \dfrac{\partial e}{\partial x_2} \end{pmatrix} = \begin{pmatrix} 1 & -1 \end{pmatrix}
+                        \]
+                        <p>(Since \(e = z_{12} - x_2 + x_1\), we get \(\partial e / \partial x_1 = 1\) and \(\partial e / \partial x_2 = -1\).)</p>
+
+                        <h3>Building H and b</h3>
+                        \[
+                            \mathbf{b}_{12}^\top = e_{12}\,\Lambda\,J_{12} = 1 \cdot 2 \cdot \begin{pmatrix} 1 & -1 \end{pmatrix} = \begin{pmatrix} 2 & -2 \end{pmatrix}
+                        \]
+                        \[
+                            \mathbf{H}_{12} = J_{12}^\top\,\Lambda\,J_{12} = \begin{pmatrix} 1 \\ -1 \end{pmatrix} \cdot 2 \cdot \begin{pmatrix} 1 & -1 \end{pmatrix} = \begin{pmatrix} 2 & -2 \\ -2 & 2 \end{pmatrix}
+                        \]
+
+                        <h3>The Rank Problem</h3>
+                        <p>
+                            \(\det(\mathbf{H}) = 2 \cdot 2 - (-2)(-2) = 0\). The matrix is singular. As expected: any uniform shift of both \(x_1\) and \(x_2\) by the same amount leaves \(e_{12}\) unchanged, so there is a one-dimensional null space.
+                        </p>
+
+                        <h3>Fixing the Gauge</h3>
+                        <p>
+                            We fix \(x_1\) (set it as the anchor) by adding a very large "spring" to the origin for that variable. Technically we add a constraint \(\mathbf{H}^{11} += 1\), which amounts to:
+                        </p>
+                        \[
+                            \mathbf{H} = \begin{pmatrix} 2 & -2 \\ -2 & 2 \end{pmatrix} + \begin{pmatrix} 1 & 0 \\ 0 & 0 \end{pmatrix} = \begin{pmatrix} 3 & -2 \\ -2 & 2 \end{pmatrix}
+                        \]
+                        <p>
+                            Now \(\det(\mathbf{H}) = 3 \cdot 2 - (-2)(-2) = 2 \neq 0\). The system is solvable.
+                        </p>
+
+                        <h3>Solving</h3>
+                        <p>
+                            We solve \(\mathbf{H}\Delta\mathbf{x} = -\mathbf{b}\), i.e.:
+                        </p>
+                        \[
+                            \begin{pmatrix} 3 & -2 \\ -2 & 2 \end{pmatrix} \Delta\mathbf{x} = -\begin{pmatrix} 2 \\ -2 \end{pmatrix} = \begin{pmatrix} -2 \\ 2 \end{pmatrix}
+                        \]
+                        \[
+                            \mathbf{H}^{-1} = \frac{1}{2}\begin{pmatrix} 2 & 2 \\ 2 & 3 \end{pmatrix}
+                        \]
+                        \[
+                            \Delta\mathbf{x} = \frac{1}{2}\begin{pmatrix} 2 & 2 \\ 2 & 3 \end{pmatrix}\begin{pmatrix} -2 \\ 2 \end{pmatrix} = \frac{1}{2}\begin{pmatrix} 0 \\ 2 \end{pmatrix} = \begin{pmatrix} 0 \\ 1 \end{pmatrix}
+                        \]
+                        <p>
+                            The update is \(\mathbf{x} \leftarrow \mathbf{x} + \Delta\mathbf{x} = (0, 0) + (0, 1) = (0, 1)\).
+                        </p>
+
+                        <h3>Interpretation</h3>
+                        <p>
+                            The optimization moved \(x_2\) from 0 to 1, exactly satisfying the constraint \(z_{12} = 1\). The anchor \(x_1 = 0\) stayed fixed. The graph converged in a single iteration because the problem is linear — in practice, with nonlinear 2D or 3D poses, multiple iterations are needed.
+                        </p>
+
+                        <div class="note_box">
+                            <strong>Why Gauss-Newton converges quickly for SLAM</strong><br>
+                            In graph SLAM the error function is "almost linear" near the solution — individual pose increments are small and the dominant nonlinearity comes from the angle wrapping in 2D rotations. Starting from an odometry-based initial guess keeps the linearization error small, and Gauss-Newton typically converges in 5–10 iterations even for large maps.
+                        </div>
+
+                        <h2>7. The Full Algorithm</h2>
+                        <pre><code>optimize(x):
+  while not converged:
+    H, b = buildLinearSystem(x)   // accumulate edge contributions
+    Δx   = solveSparse(HΔx = −b)  // sparse Cholesky or CG
+    x    = x + Δx
+  return x</code></pre>
+                        <p>
+                            The key to building the linear system efficiently is to iterate over edges rather than computing the full Jacobian. For each edge \((i,j)\):
+                        </p>
+                        <ul>
+                            <li>Compute \(\mathbf{e}_{ij}\) and the local Jacobian blocks \(\mathbf{A}_{ij}\), \(\mathbf{B}_{ij}\).</li>
+                            <li>Accumulate into \(\mathbf{b}\): block \(i\) gets \(\mathbf{A}_{ij}^\top\mathbf{\Lambda}_{ij}\mathbf{e}_{ij}\); block \(j\) gets \(\mathbf{B}_{ij}^\top\mathbf{\Lambda}_{ij}\mathbf{e}_{ij}\).</li>
+                            <li>Accumulate into \(\mathbf{H}\): the four blocks \((i,i)\), \((i,j)\), \((j,i)\), \((j,j)\) each get their respective outer-product term.</li>
+                        </ul>
+
+                        <h2>8. Uncertainty from the Optimized Graph</h2>
+                        <p>
+                            After convergence, \(\mathbf{H}\) evaluated at the solution \(\mathbf{x}^*\) is the <strong>information matrix</strong> of the joint distribution over all poses. Its inverse \(\mathbf{H}^{-1}\) is the full covariance matrix. The diagonal blocks give the marginal uncertainty of each individual pose; off-diagonal blocks give the correlated uncertainties between pose pairs. In practice, computing the full inverse is expensive — sparse methods exist to recover only the required diagonal or near-diagonal blocks.
+                        </p>
+                        <p>
+                            To find the <em>relative</em> uncertainty between two specific poses \(\mathbf{x}_i\) and \(\mathbf{x}_j\), fix \(\mathbf{x}_i\) (suppress its rows and columns from \(\mathbf{H}\)), then invert the reduced system and read off the \((j,j)\) block. This gives the covariance of \(\mathbf{x}_j\) conditioned on \(\mathbf{x}_i\) being known exactly.
+                        </p>
+
+                        <h2>9. What Makes This Work in Practice</h2>
+                        <p>
+                            The graph-based formulation has several properties that made it the dominant paradigm:
+                        </p>
+                        <ul>
+                            <li><strong>Scalability.</strong> The sparsity of \(\mathbf{H}\) means the linear system can be solved in near-linear time for planar (chain-like) graphs and scales gracefully even with many loop closures.</li>
+                            <li><strong>Offline and online variants.</strong> The full batch optimizer re-solves the entire graph after all data is collected. Incremental solvers (iSAM2, based on Bayes trees) update only the affected part of the factorization when new edges arrive.</li>
+                            <li><strong>Robustness.</strong> Outlier edges — wrong loop closures — can corrupt the entire solution. Robust kernels (Huber, Cauchy) or explicit outlier rejection (DCS, switchable constraints) are essential for real-world operation.</li>
+                            <li><strong>Separation of concerns.</strong> The back-end does not care whether edges came from LiDAR scan matching, visual place recognition, or GPS. Any front-end that produces relative pose measurements with associated uncertainties can feed into the same optimizer.</li>
+                        </ul>
+
+                        <div class="note_box">
+                            <strong>Reference implementation</strong><br>
+                            The g2o library (Kümmerle et al., 2011) implements exactly this framework with support for 2D, 3D, and Lie-group poses, sparse Cholesky via CHOLMOD, and a plugin architecture for custom edge types. GTSAM uses factor graphs with the same underlying math and adds incremental solvers.
+                        </div>
+
+                        <h2>References</h2>
+                        <ul class="references_list">
+                            <li>
+                                Stachniss, C. (2013–2014). <em>Robot Mapping — Lecture 16: Graph-Based SLAM using Pose Graphs.</em> University of Bonn, Photogrammetry &amp; Robotics Lab.
+                            </li>
+                            <li>
+                                Grisetti, G., Kümmerle, R., Stachniss, C., &amp; Burgard, W. (2010). A Tutorial on Graph-Based SLAM. <em>IEEE Intelligent Transportation Systems Magazine</em>, 2(4), 31–43.
+                            </li>
+                            <li>
+                                Kümmerle, R., Grisetti, G., Strasdat, H., Konolige, K., &amp; Burgard, W. (2011). g2o: A General Framework for Graph Optimization. <em>Proceedings of ICRA 2011.</em>
+                            </li>
+                        </ul>
+
+                        <div class="post_nav">
+                            <div>
+                                <span class="nav_label">← Previous</span>
+                                <a href="lec-slam-icp-unknown-da.html">ICP — Unknown DA</a>
+                            </div>
+                            <div class="text-right">
+                                <span class="nav_label">Back to Notes</span>
+                                <a href="blog.html">All Notes</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+
+                        <aside class="single_sidebar_widget">
+                            <h4 class="widget_title">Graph SLAM</h4>
+                            <ul class="course_contents_list">
+                                <li><a href="lec-slam-camera-params.html">01 — Camera Parameters</a></li>
+                                <li><a href="lec-slam-dlt.html">02 — DLT</a></li>
+                                <li><a href="lec-slam-fundamental-essential.html">03 — Fundamental &amp; Essential</a></li>
+                                <li><a href="lec-slam-fund-essential-direct.html">04 — Fund. &amp; Essential Direct</a></li>
+                                <li><a href="lec-slam-epipolar.html">05 — Epipolar Geometry</a></li>
+                                <li><a href="lec-slam-triangulation.html">06 — Triangulation</a></li>
+                                <li><a href="lec-slam-bundle-adjustment.html">07 — Bundle Adjustment</a></li>
+                                <li><a href="lec-slam-bundle-adjustment-2.html">08 — Bundle Adjustment II</a></li>
+                                <li><a href="lec-slam-features-keypoints.html">09 — Features: Keypoints</a></li>
+                                <li><a href="lec-slam-features-descriptors.html">10 — Features: Descriptors</a></li>
+                                <li><a href="lec-slam-icp-known-da.html">11 — ICP: Known DA</a></li>
+                                <li><a href="lec-slam-icp-unknown-da.html">12 — ICP: Unknown DA</a></li>
+                                <li class="active"><a href="lec-robmap-graph-slam.html">13 — Graph-Based SLAM</a></li>
+                            </ul>
+                        </aside>
+
+                        <aside class="single-sidebar-widget tag_cloud_widget">
+                            <h4 class="widget_title">Topics</h4>
+                            <ul class="list">
+                                <li><a href="#">SLAM</a></li>
+                                <li><a href="#">Pose Graph</a></li>
+                                <li><a href="#">Gauss-Newton</a></li>
+                                <li><a href="#">Least Squares</a></li>
+                                <li><a href="#">Loop Closure</a></li>
+                                <li><a href="#">Sparse Systems</a></li>
+                                <li><a href="#">Gauge Freedom</a></li>
+                                <li><a href="#">g2o / GTSAM</a></li>
+                            </ul>
+                        </aside>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer_area">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="footer_top flex-column">
+                        <div class="footer_logo">
+                            <h4>Get In Touch</h4>
+                        </div>
+                        <div class="footer_social">
+                            <a href="https://linkedin.com/in/muhammad-abdullah-904110215" target="_blank"><i class="fa fa-linkedin"></i></a>
+                            <a href="https://github.com/abdullahibr-10" target="_blank"><i class="fa fa-github"></i></a>
+                            <a href="mailto:abdullahibr08@gmail.com"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer_bottom justify-content-center">
+                <p class="col-lg-8 col-sm-12 footer-text">
+                    Copyright &#169;<script>document.write(new Date().getFullYear());</script> Muhammad Abdullah. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/stellar.js"></script>
+    <script src="vendors/nice-select/js/jquery.nice-select.min.js"></script>
+    <script src="vendors/isotope/imagesloaded.pkgd.min.js"></script>
+    <script src="vendors/isotope/isotope-min.js"></script>
+    <script src="vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="js/theme.js"></script>
+</body>
+</html>
